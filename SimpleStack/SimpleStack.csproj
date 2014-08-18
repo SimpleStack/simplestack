@@ -177,12 +177,12 @@
     <Compile Include="Metadata\SoapMetadataConfig.cs" />
     <Compile Include="Interfaces\ISimpleStackHttpHandler.cs" />
     <Compile Include="Metadata\MetadataPagesConfig.cs" />
-    <Compile Include="_EndpointHost.cs" />
+    <Compile Include="EndpointHost.cs" />
     <Compile Include="Interfaces\IAppHost.cs" />
     <Compile Include="Cache\MemoryCacheClient.cs" />
     <Compile Include="Cache\ICacheClient.cs" />
     <Compile Include="Cache\IRemoveByPattern.cs" />
-    <Compile Include="_AppHostBase.cs" />
+    <Compile Include="AppHostBase.cs" />
     <Compile Include="Interfaces\IRelease.cs" />
     <Compile Include="Interfaces\IRequiresRequestContext.cs" />
     <Compile Include="Interfaces\IContentTypeFilter.cs" />
@@ -195,7 +195,7 @@
     <Compile Include="Handlers\RestHandler.cs" />
     <Compile Include="Extensions\HttpResponseExtensions.cs" />
     <Compile Include="ErrorResponse.cs" />
-    <Compile Include="Handlers\_EndpointHandlerBase.cs" />
+    <Compile Include="Handlers\EndpointHandlerBase.cs" />
     <Compile Include="Handlers\SimpleStackHttpHandlerFactory.cs" />
     <Compile Include="Handlers\RedirectHttpHandler.cs" />
     <Compile Include="HttpHeaders.cs" />
