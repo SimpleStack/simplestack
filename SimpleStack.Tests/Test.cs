@@ -11,6 +11,16 @@ using SimpleStack.Serializers.NServicekit;
 
 namespace SimpleStack.Tests
 {
+	public class SomeStringClass : ISomeStringInterface
+	{
+		public static string TEST_STRING = "Test";
+
+		public string GetSomeString()
+		{
+			return TEST_STRING;
+		}
+	}
+
 	public class TestAppHost : AppHostBase
 	{
 		public TestAppHost()
@@ -22,6 +32,9 @@ namespace SimpleStack.Tests
 		{
 			ContentTypeFilters.Register(new JsonContentTypeSerializer());
 			ContentTypeFilters.Register(new XmlContentTypeSerializer());
+
+			container.Register<ISomeStringInterface>(x => new SomeStringClass());
+
 		}
 	}
 
@@ -162,6 +175,23 @@ namespace SimpleStack.Tests
 				Assert.AreEqual(409, ctx.Response.StatusCode);
 			}
 		}
+
+		[Test]
+		public void TestHelloSomeString()
+		{
+			using (var ctx = new MockContext(new MockOwinEnv("GET", "/hello-somestringinterface")))
+			{
+				_appHost.ProcessRequest(ctx).Wait();
+
+				Assert.AreEqual(200, ctx.Response.StatusCode);
+
+				var response = ctx.GetResponseBodyAs<HelloResponse>();
+
+				Assert.AreEqual(SomeStringClass.TEST_STRING,response.Result);
+			}
+		}
+
+		
 
 	}
 }

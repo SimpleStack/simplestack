@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using SimpleStack.Interfaces;
-using SimpleStack.Extensions;
-using SimpleStack.Serializers;
 using SimpleStack.Config;
+using SimpleStack.Extensions;
+using SimpleStack.Interfaces;
+using SimpleStack.Serializers;
 
 namespace SimpleStack
 {
-	public class RestPath: IRestPath
+	public class RestPath : IRestPath
 	{
 		private const string IgnoreParam = "ignore";
 		private const string WildCard = "*";
@@ -20,103 +20,47 @@ namespace SimpleStack
 		private const char ComponentSeperator = '.';
 		private const string VariablePrefix = "{";
 
-		readonly bool[] componentsWithSeparators = new bool[0];
-
-		private readonly string restPath;
 		private readonly string allowedVerbs;
 		private readonly bool allowsAllVerbs;
+		private readonly bool[] componentsWithSeparators = new bool[0];
 		private readonly bool isWildCardPath;
 
 		private readonly string[] literalsToMatch = new string[0];
+		private readonly Dictionary<string, string> propertyNamesMap = new Dictionary<string, string>();
+		private readonly string restPath;
+		private readonly StringMapTypeDeserializer typeDeserializer;
 
+		private readonly int variableArgsCount;
 		private readonly string[] variablesNames = new string[0];
-		private int variableArgsCount;
-
-		/// <summary>
-		/// The number of segments separated by '/' determinable by path.Split('/').Length
-		/// e.g. /path/to/here.ext == 3
-		/// </summary>
-		public int PathComponentsCount { get; set; }
-
-		/// <summary>
-		/// The total number of segments after subparts have been exploded ('.') 
-		/// e.g. /path/to/here.ext == 4
-		/// </summary>
-		public int TotalComponentsCount { get; set; }
-
 		public string[] Verbs = new string[0];
 
-		public Type RequestType { get; private set; }
-
-		public string Path { get { return this.restPath; } }
-
-		public string Summary { get; private set; }
-
-		public string Notes { get; private set; }
-
-		public bool AllowsAllVerbs { get { return this.allowsAllVerbs; } }
-
-		public string AllowedVerbs { get { return this.allowedVerbs; } }
-
-		public static string[] GetPathPartsForMatching(string pathInfo)
+		public RestPath(Type requestType, string path) : this(requestType, path, null)
 		{
-			var parts = pathInfo.ToLower().Split(PathSeperatorChar)
-				.Where(x => !string.IsNullOrEmpty(x)).ToArray();
-			return parts;
 		}
-
-		public static IEnumerable<string> GetFirstMatchHashKeys(string[] pathPartsForMatching)
-		{
-			var hashPrefix = pathPartsForMatching.Length + PathSeperator;
-			return GetPotentialMatchesWithPrefix(hashPrefix, pathPartsForMatching);
-		}
-
-		public static IEnumerable<string> GetFirstMatchWildCardHashKeys(string[] pathPartsForMatching)
-		{
-			const string hashPrefix = WildCard + PathSeperator;
-			return GetPotentialMatchesWithPrefix(hashPrefix, pathPartsForMatching);
-		}
-
-		private static IEnumerable<string> GetPotentialMatchesWithPrefix(string hashPrefix, string[] pathPartsForMatching)
-		{
-			foreach (var part in pathPartsForMatching)
-			{
-				yield return hashPrefix + part;
-				var subParts = part.Split(ComponentSeperator);
-				if (subParts.Length == 1) continue;
-
-				foreach (var subPart in subParts)
-				{
-					yield return hashPrefix + subPart;
-				}
-			}
-		}
-
-		public RestPath(Type requestType, string path) : this(requestType, path, null) { }
 
 		public RestPath(Type requestType, string path, string verbs, string summary = null, string notes = null)
 		{
-			this.RequestType = requestType;
-			this.Summary = summary;
-			this.Notes = notes;
-			this.restPath = path;
+			RequestType = requestType;
+			Summary = summary;
+			Notes = notes;
+			restPath = path;
 
-			this.allowsAllVerbs = verbs == null || verbs == WildCard;
-			if (!this.allowsAllVerbs)
+			allowsAllVerbs = verbs == null || verbs == WildCard;
+			if (!allowsAllVerbs)
 			{
-				this.allowedVerbs = verbs.ToUpper();
+				allowedVerbs = verbs.ToUpper();
 			}
 
 			var componentsList = new List<string>();
 
 			//We only split on '.' if the restPath has them. Allows for /{action}.{type}
 			var hasSeparators = new List<bool>();
-			foreach (var component in this.restPath.Split(PathSeperatorChar))
+			foreach (string component in restPath.Split(PathSeperatorChar))
 			{
 				if (string.IsNullOrEmpty(component)) continue;
 
 				if (component.Contains(VariablePrefix)
-					&& component.Contains(ComponentSeperator))
+				    && component.Contains(ComponentSeperator))
 				{
 					hasSeparators.Add(true);
 					componentsList.AddRange(component.Split(ComponentSeperator));
@@ -128,206 +72,140 @@ namespace SimpleStack
 				}
 			}
 
-			var components = componentsList.ToArray();
-			this.TotalComponentsCount = components.Length;
+			string[] components = componentsList.ToArray();
+			TotalComponentsCount = components.Length;
 
-			this.literalsToMatch = new string[this.TotalComponentsCount];
-			this.variablesNames = new string[this.TotalComponentsCount];
-			this.componentsWithSeparators = hasSeparators.ToArray();
-			this.PathComponentsCount = this.componentsWithSeparators.Length;
+			literalsToMatch = new string[TotalComponentsCount];
+			variablesNames = new string[TotalComponentsCount];
+			componentsWithSeparators = hasSeparators.ToArray();
+			PathComponentsCount = componentsWithSeparators.Length;
 			string firstLiteralMatch = null;
-			var lastVariableMatchPos = -1;
+			int lastVariableMatchPos = -1;
 
 			var sbHashKey = new StringBuilder();
-			for (var i = 0; i < components.Length; i++)
+			for (int i = 0; i < components.Length; i++)
 			{
-				var component = components[i];
+				string component = components[i];
 
 				if (component.StartsWith(VariablePrefix))
 				{
-					this.variablesNames[i] = component.Substring(1, component.Length - 2);
-					this.variableArgsCount++;
+					variablesNames[i] = component.Substring(1, component.Length - 2);
+					variableArgsCount++;
 					lastVariableMatchPos = i;
 				}
 				else
 				{
-					this.literalsToMatch[i] = component.ToLower();
-					sbHashKey.Append(i + PathSeperatorChar.ToString() + this.literalsToMatch);
+					literalsToMatch[i] = component.ToLower();
+					sbHashKey.Append(i + PathSeperatorChar.ToString() + literalsToMatch);
 
 					if (firstLiteralMatch == null)
 					{
-						firstLiteralMatch = this.literalsToMatch[i];
+						firstLiteralMatch = literalsToMatch[i];
 					}
 				}
 			}
 
 			if (lastVariableMatchPos != -1)
 			{
-				var lastVariableMatch = this.variablesNames[lastVariableMatchPos];
-				this.isWildCardPath = lastVariableMatch[lastVariableMatch.Length - 1] == WildCardChar;
-				if (this.isWildCardPath)
+				string lastVariableMatch = variablesNames[lastVariableMatchPos];
+				isWildCardPath = lastVariableMatch[lastVariableMatch.Length - 1] == WildCardChar;
+				if (isWildCardPath)
 				{
-					this.variablesNames[lastVariableMatchPos] = lastVariableMatch.Substring(0, lastVariableMatch.Length - 1);
+					variablesNames[lastVariableMatchPos] = lastVariableMatch.Substring(0, lastVariableMatch.Length - 1);
 				}
 			}
 
-			this.FirstMatchHashKey = !this.isWildCardPath
-				? this.PathComponentsCount + PathSeperator + firstLiteralMatch
-				: WildCardChar + PathSeperator + firstLiteralMatch;
+			FirstMatchHashKey = !isWildCardPath
+				                    ? PathComponentsCount + PathSeperator + firstLiteralMatch
+				                    : WildCardChar + PathSeperator + firstLiteralMatch;
 
-			this.IsValid = sbHashKey.Length > 0;
-			this.UniqueMatchHashKey = sbHashKey.ToString();
+			IsValid = sbHashKey.Length > 0;
+			UniqueMatchHashKey = sbHashKey.ToString();
 
-			this.typeDeserializer = new StringMapTypeDeserializer(this.RequestType);
+			typeDeserializer = new StringMapTypeDeserializer(RequestType);
 			RegisterCaseInsenstivePropertyNameMappings();
 		}
 
-		private void RegisterCaseInsenstivePropertyNameMappings()
+		/// <summary>
+		///     The number of segments separated by '/' determinable by path.Split('/').Length
+		///     e.g. /path/to/here.ext == 3
+		/// </summary>
+		public int PathComponentsCount { get; set; }
+
+		/// <summary>
+		///     The total number of segments after subparts have been exploded ('.')
+		///     e.g. /path/to/here.ext == 4
+		/// </summary>
+		public int TotalComponentsCount { get; set; }
+
+		public string Path
 		{
-			var propertyName = "";
-			try
-			{
-				foreach (var propertyInfo in this.RequestType.GetSerializableProperties())
-				{
-					propertyName = propertyInfo.Name;
-					propertyNamesMap.Add(propertyName.ToLower(), propertyName);
-				}
-				if (SerializationConfig.IncludePublicFields)
-				{
-					foreach (var fieldInfo in this.RequestType.GetSerializableFields())
-					{
-						propertyName = fieldInfo.Name;
-						propertyNamesMap.Add(propertyName.ToLower(), propertyName);
-					}
-				}
-			}
-			catch (Exception)
-			{
-				throw new AmbiguousMatchException("Property names are case-insensitive: "
-					+ this.RequestType.Name + "." + propertyName);
-			}
+			get { return restPath; }
+		}
+
+		public string Summary { get; private set; }
+
+		public string Notes { get; private set; }
+
+		public bool AllowsAllVerbs
+		{
+			get { return allowsAllVerbs; }
+		}
+
+		public string AllowedVerbs
+		{
+			get { return allowedVerbs; }
 		}
 
 		public bool IsValid { get; set; }
 
 		/// <summary>
-		/// Provide for quick lookups based on hashes that can be determined from a request url
+		///     Provide for quick lookups based on hashes that can be determined from a request url
 		/// </summary>
 		public string FirstMatchHashKey { get; private set; }
 
 		public string UniqueMatchHashKey { get; private set; }
-
-		private readonly StringMapTypeDeserializer typeDeserializer;
-
-		private readonly Dictionary<string, string> propertyNamesMap = new Dictionary<string, string>();
-
-		public int MatchScore(string httpMethod, string[] withPathInfoParts)
-		{
-			var isMatch = IsMatch(httpMethod, withPathInfoParts);
-			if (!isMatch) return -1;
-
-			var exactVerb = httpMethod == AllowedVerbs;
-			var score = exactVerb ? 10 : 1;
-			score += Math.Max((10 - variableArgsCount), 1) * 100;
-
-			return score;
-		}
-
-		/// <summary>
-		/// For performance withPathInfoParts should already be a lower case string
-		/// to minimize redundant matching operations.
-		/// </summary>
-		/// <param name="httpMethod"></param>
-		/// <param name="withPathInfoParts"></param>
-		/// <returns></returns>
-		public bool IsMatch(string httpMethod, string[] withPathInfoParts)
-		{
-			if (withPathInfoParts.Length != this.PathComponentsCount && !this.isWildCardPath) return false;
-			if (!this.allowsAllVerbs && !this.allowedVerbs.Contains(httpMethod)) return false;
-
-			if (!ExplodeComponents(ref withPathInfoParts)) return false;
-			if (this.TotalComponentsCount != withPathInfoParts.Length && !this.isWildCardPath) return false;
-
-			for (var i = 0; i < this.TotalComponentsCount; i++)
-			{
-				var literalToMatch = this.literalsToMatch[i];
-				if (literalToMatch == null) continue;
-
-				if (withPathInfoParts[i] != literalToMatch) return false;
-			}
-
-			return true;
-		}
-
-		private bool ExplodeComponents(ref string[] withPathInfoParts)
-		{
-			var totalComponents = new List<string>();
-			for (var i = 0; i < withPathInfoParts.Length; i++)
-			{
-				var component = withPathInfoParts[i];
-				if (string.IsNullOrEmpty(component)) continue;
-
-				if (this.PathComponentsCount != this.TotalComponentsCount
-					&& this.componentsWithSeparators[i])
-				{
-					var subComponents = component.Split(ComponentSeperator);
-					if (subComponents.Length < 2) return false;
-					totalComponents.AddRange(subComponents);
-				}
-				else
-				{
-					totalComponents.Add(component);
-				}
-			}
-
-			withPathInfoParts = totalComponents.ToArray();
-			return true;
-		}
-
-		public object CreateRequest(string pathInfo)
-		{
-			return CreateRequest(pathInfo, null, null);
-		}
+		public Type RequestType { get; private set; }
 
 		public object CreateRequest(string pathInfo, Dictionary<string, string> queryStringAndFormData, object fromInstance)
 		{
-			var requestComponents = pathInfo.Split(PathSeperatorChar)
-				.Where(x => !string.IsNullOrEmpty(x)).ToArray();
+			string[] requestComponents = pathInfo.Split(PathSeperatorChar)
+			                                     .Where(x => !string.IsNullOrEmpty(x)).ToArray();
 
 			ExplodeComponents(ref requestComponents);
 
-			if (requestComponents.Length != this.TotalComponentsCount)
+			if (requestComponents.Length != TotalComponentsCount)
 			{
-				var isValidWildCardPath = this.isWildCardPath
-					&& requestComponents.Length >= this.TotalComponentsCount - 1;
+				bool isValidWildCardPath = isWildCardPath
+				                           && requestComponents.Length >= TotalComponentsCount - 1;
 
 				if (!isValidWildCardPath)
 					throw new ArgumentException(string.Format(
 						"Path Mismatch: Request Path '{0}' has invalid number of components compared to: '{1}'",
-						pathInfo, this.restPath));
+						pathInfo, restPath));
 			}
 
 			var requestKeyValuesMap = new Dictionary<string, string>();
-			for (var i = 0; i < this.TotalComponentsCount; i++)
+			for (int i = 0; i < TotalComponentsCount; i++)
 			{
-				var variableName = this.variablesNames[i];
+				string variableName = variablesNames[i];
 				if (variableName == null) continue;
 
 				string propertyNameOnRequest;
-				if (!this.propertyNamesMap.TryGetValue(variableName.ToLower(), out propertyNameOnRequest))
+				if (!propertyNamesMap.TryGetValue(variableName.ToLower(), out propertyNameOnRequest))
 				{
 					if (IgnoreParam.EqualsIgnoreCase(variableName))
 						continue;
 
 					throw new ArgumentException("Could not find property "
-						+ variableName + " on " + RequestType.Name);
+					                            + variableName + " on " + RequestType.Name);
 				}
 
-				var value = requestComponents.Length > 1 ? requestComponents[i] : null; //wildcard has arg mismatch
-				if (value != null && i == this.TotalComponentsCount - 1)
+				string value = requestComponents.Length > 1 ? requestComponents[i] : null; //wildcard has arg mismatch
+				if (value != null && i == TotalComponentsCount - 1)
 				{
 					var sb = new StringBuilder(value);
-					for (var j = i + 1; j < requestComponents.Length; j++)
+					for (int j = i + 1; j < requestComponents.Length; j++)
 					{
 						sb.Append(PathSeperatorChar + requestComponents[j]);
 					}
@@ -347,7 +225,134 @@ namespace SimpleStack
 				}
 			}
 
-			return this.typeDeserializer.PopulateFromMap(fromInstance, requestKeyValuesMap);
+			return typeDeserializer.PopulateFromMap(fromInstance, requestKeyValuesMap);
+		}
+
+		public static string[] GetPathPartsForMatching(string pathInfo)
+		{
+			string[] parts = pathInfo.ToLower().Split(PathSeperatorChar)
+			                         .Where(x => !string.IsNullOrEmpty(x)).ToArray();
+			return parts;
+		}
+
+		public static IEnumerable<string> GetFirstMatchHashKeys(string[] pathPartsForMatching)
+		{
+			string hashPrefix = pathPartsForMatching.Length + PathSeperator;
+			return GetPotentialMatchesWithPrefix(hashPrefix, pathPartsForMatching);
+		}
+
+		public static IEnumerable<string> GetFirstMatchWildCardHashKeys(string[] pathPartsForMatching)
+		{
+			const string hashPrefix = WildCard + PathSeperator;
+			return GetPotentialMatchesWithPrefix(hashPrefix, pathPartsForMatching);
+		}
+
+		private static IEnumerable<string> GetPotentialMatchesWithPrefix(string hashPrefix, IEnumerable<string> pathPartsForMatching)
+		{
+			foreach (string part in pathPartsForMatching)
+			{
+				yield return hashPrefix + part;
+				string[] subParts = part.Split(ComponentSeperator);
+				if (subParts.Length == 1) continue;
+
+				foreach (string subPart in subParts)
+				{
+					yield return hashPrefix + subPart;
+				}
+			}
+		}
+
+		private void RegisterCaseInsenstivePropertyNameMappings()
+		{
+			string propertyName = "";
+			try
+			{
+				foreach (PropertyInfo propertyInfo in RequestType.GetSerializableProperties())
+				{
+					propertyName = propertyInfo.Name;
+					propertyNamesMap.Add(propertyName.ToLower(), propertyName);
+				}
+				if (SerializationConfig.IncludePublicFields)
+				{
+					foreach (FieldInfo fieldInfo in RequestType.GetSerializableFields())
+					{
+						propertyName = fieldInfo.Name;
+						propertyNamesMap.Add(propertyName.ToLower(), propertyName);
+					}
+				}
+			}
+			catch (Exception)
+			{
+				throw new AmbiguousMatchException("Property names are case-insensitive: " + RequestType.Name + "." + propertyName);
+			}
+		}
+
+		public int MatchScore(string httpMethod, string[] withPathInfoParts)
+		{
+			bool isMatch = IsMatch(httpMethod, withPathInfoParts);
+			if (!isMatch) return -1;
+
+			bool exactVerb = httpMethod == AllowedVerbs;
+			int score = exactVerb ? 10 : 1;
+			score += Math.Max((10 - variableArgsCount), 1)*100;
+
+			return score;
+		}
+
+		/// <summary>
+		///     For performance withPathInfoParts should already be a lower case string
+		///     to minimize redundant matching operations.
+		/// </summary>
+		/// <param name="httpMethod"></param>
+		/// <param name="withPathInfoParts"></param>
+		/// <returns></returns>
+		public bool IsMatch(string httpMethod, string[] withPathInfoParts)
+		{
+			if (withPathInfoParts.Length != PathComponentsCount && !isWildCardPath) return false;
+			if (!allowsAllVerbs && !allowedVerbs.Contains(httpMethod)) return false;
+
+			if (!ExplodeComponents(ref withPathInfoParts)) return false;
+			if (TotalComponentsCount != withPathInfoParts.Length && !isWildCardPath) return false;
+
+			for (int i = 0; i < TotalComponentsCount; i++)
+			{
+				string literalToMatch = literalsToMatch[i];
+				if (literalToMatch == null) continue;
+
+				if (withPathInfoParts[i] != literalToMatch) return false;
+			}
+
+			return true;
+		}
+
+		private bool ExplodeComponents(ref string[] withPathInfoParts)
+		{
+			var totalComponents = new List<string>();
+			for (int i = 0; i < withPathInfoParts.Length; i++)
+			{
+				string component = withPathInfoParts[i];
+				if (string.IsNullOrEmpty(component)) continue;
+
+				if (PathComponentsCount != TotalComponentsCount
+				    && componentsWithSeparators[i])
+				{
+					string[] subComponents = component.Split(ComponentSeperator);
+					if (subComponents.Length < 2) return false;
+					totalComponents.AddRange(subComponents);
+				}
+				else
+				{
+					totalComponents.Add(component);
+				}
+			}
+
+			withPathInfoParts = totalComponents.ToArray();
+			return true;
+		}
+
+		public object CreateRequest(string pathInfo)
+		{
+			return CreateRequest(pathInfo, null, null);
 		}
 
 		public override int GetHashCode()
@@ -356,4 +361,3 @@ namespace SimpleStack
 		}
 	}
 }
-

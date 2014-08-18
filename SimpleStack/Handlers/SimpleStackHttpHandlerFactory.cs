@@ -133,7 +133,7 @@ namespace SimpleStack.Handlers
 			}
 
 			var rawHandlers = config.RawHttpHandlers;
-			rawHandlers.Add(ReturnRequestInfo);
+			//rawHandlers.Add(ReturnRequestInfo);
 			//TODO: vdaron restore MiniProfiler
 			//rawHandlers.Add(MiniProfilerHandler.MatchesRequest);
 			RawHttpHandlers = rawHandlers.ToArray();
@@ -292,22 +292,22 @@ namespace SimpleStack.Handlers
 //			return null;
 //		}
 
-		private static ISimpleStackHttpHandler ReturnRequestInfo(IHttpRequest httpReq)
-		{
-			if (EndpointHost.Config.DebugOnlyReturnRequestInfo
-				|| (EndpointHost.DebugMode && httpReq.PathInfo.EndsWith("__requestinfo")))
-			{
-				var reqInfo = RequestInfoHandler.GetRequestInfo(httpReq);
+		//private static ISimpleStackHttpHandler ReturnRequestInfo(IHttpRequest httpReq)
+		//{
+		//	if (EndpointHost.Config.DebugOnlyReturnRequestInfo
+		//		|| (EndpointHost.DebugMode && httpReq.PathInfo.EndsWith("__requestinfo")))
+		//	{
+		//		var reqInfo = RequestInfoHandler.GetRequestInfo(httpReq);
 
-				reqInfo.Host = EndpointHost.Config.DebugHttpListenerHostEnvironment + "_v" + Env.ServiceStackVersion + "_" + EndpointHost.Config.ServiceName;
-				reqInfo.PathInfo = httpReq.PathInfo;
-				reqInfo.Path = httpReq.GetPathUrl();
+		//		reqInfo.Host = EndpointHost.Config.DebugHttpListenerHostEnvironment + "_v" + Env.ServiceStackVersion + "_" + EndpointHost.Config.ServiceName;
+		//		reqInfo.PathInfo = httpReq.PathInfo;
+		//		reqInfo.Path = httpReq.GetPathUrl();
 
-				return new RequestInfoHandler { RequestInfo = reqInfo };
-			}
+		//		return new RequestInfoHandler { RequestInfo = reqInfo };
+		//	}
 
-			return null;
-		}
+		//	return null;
+		//}
 
 		// no handler registered 
 		// serve the file from the filesystem, restricting to a safelist of extensions

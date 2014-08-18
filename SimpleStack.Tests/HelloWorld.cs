@@ -6,6 +6,11 @@ using SimpleStack.Tools;
 
 namespace SimpleStack.Tests
 {
+	public interface ISomeStringInterface
+	{
+		string GetSomeString();
+	}
+
 	public class PafException : Exception
 	{
 		public const string Message = "Paf";
@@ -36,8 +41,14 @@ namespace SimpleStack.Tests
 	[Route("/throw-detail-ihasresponsestatus", "GET")]
 	public class ThrowExceptionDetailRequestWithIHasResponseStatusInterface { }
 
-	[Route("/conflict")]
+	[Route("/conflict","GET")]
 	public class ConflictHttpResponseRequest
+	{
+		
+	}
+
+	[Route("/hello-somestringinterface","GET")]
+	public class HelloUsingSomeStringInterface
 	{
 		
 	}
@@ -62,6 +73,8 @@ namespace SimpleStack.Tests
 
 	public class TestService : Service
 	{
+		public ISomeStringInterface SomeStringInterface { get; set; }
+
 		public HelloResponse Get(Hello request)
 		{
 			return new HelloResponse {Result = "Hello, " + request.Name};
@@ -85,6 +98,10 @@ namespace SimpleStack.Tests
 		public object Get(ConflictHttpResponseRequest request)
 		{
 			return new HttpResult(HttpStatusCode.Conflict,"Conflict !");
+		}
+		public HelloResponse Get(HelloUsingSomeStringInterface request)
+		{
+			return new HelloResponse {Result = SomeStringInterface.GetSomeString()};
 		}
 	}
 }

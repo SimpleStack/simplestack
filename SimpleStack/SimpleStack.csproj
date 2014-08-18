@@ -214,13 +214,10 @@
     <Compile Include="Interfaces\IHttpError.cs" />
     <Compile Include="Tools\HttpError.cs" />
     <Compile Include="Handlers\IndexPageHttpHandler.cs" />
-    <Compile Include="Handlers\RequestInfoHttpHandler.cs" />
     <Compile Include="RequestAttributes.cs" />
     <Compile Include="HttpResponseFilter.cs" />
     <Compile Include="HttpResponseStreamWrapper.cs" />
     <Compile Include="SerializationContext.cs" />
-    <Compile Include="Serializers\Xml\XmlSerializer.cs" />
-    <Compile Include="Serializers\JsonDataContractDeserializer.cs" />
     <Compile Include="Interfaces\ITextSerializer.cs" />
     <Compile Include="Interfaces\IStreamWriter.cs" />
     <Compile Include="Interfaces\IPartialWriter.cs" />
@@ -238,8 +235,6 @@
     <Compile Include="Serializers\Jsv\JsvWriter.cs" />
     <Compile Include="Serializers\Jsv\JsvFormatter.cs" />
     <Compile Include="Serializers\Jsv\JsvDeserializeType.cs" />
-    <Compile Include="Serializers\Json\JsonSerializer.cs" />
-    <Compile Include="Serializers\JsonDataContractSerializer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup />

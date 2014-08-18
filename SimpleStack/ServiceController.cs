@@ -5,19 +5,19 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-//using ServiceStack.Logging;
-//using ServiceStack.Messaging;
-//using ServiceStack.ServiceModel.Serialization;
-//using ServiceStack.Text;
-//using ServiceStack.WebHost.Endpoints;
 using SimpleStack.Interfaces;
 using SimpleStack.Logging;
 using SimpleStack.Attributes;
 using SimpleStack.Enums;
 using SimpleStack.Extensions;
-using Microsoft.Owin;
+using SimpleStack.Serializers;
+//using ServiceStack.Logging;
+//using ServiceStack.Messaging;
+//using ServiceStack.ServiceModel.Serialization;
+//using ServiceStack.Text;
+//using ServiceStack.WebHost.Endpoints;
 
-namespace SimpleStack.Serializers
+namespace SimpleStack
 {
 	public delegate object ServiceExecFn(IRequestContext requestContext, object request);
 	public delegate object InstanceExecFn(IRequestContext requestContext, object intance, object request);
@@ -39,11 +39,9 @@ namespace SimpleStack.Serializers
 			this.ResolveServicesFn = resolveServicesFn;
 		}
 
-		readonly Dictionary<Type, ServiceExecFn> requestExecMap
-		= new Dictionary<Type, ServiceExecFn>();
+		readonly Dictionary<Type, ServiceExecFn> requestExecMap = new Dictionary<Type, ServiceExecFn>();
 
-		readonly Dictionary<Type, RestrictAttribute> requestServiceAttrs
-		= new Dictionary<Type, RestrictAttribute>();
+		readonly Dictionary<Type, RestrictAttribute> requestServiceAttrs = new Dictionary<Type, RestrictAttribute>();
 
 		public bool EnableAccessRestrictions { get; set; }
 
@@ -404,8 +402,7 @@ namespace SimpleStack.Serializers
 		}
 
 		[Obsolete("use obsolete api ?")]
-		private static Func<object, object, EndpointAttributes, object> CallServiceExecuteGeneric(
-			Type requestType, Type serviceType)
+		private static Func<object, object, EndpointAttributes, object> CallServiceExecuteGeneric(Type requestType, Type serviceType)
 		{
 			var mi = GServiceExec.GetExecMethodInfo(serviceType, requestType);
 
