@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{D30C3962-21B1-4055-B985-98A4E1DA45FA}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>SimpleStack.Tests</RootNamespace>
+    <AssemblyName>SimpleStack.Tests</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Owin, Version=2.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\SimpleStack.Owin\bin\Debug\Microsoft.Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="nunit.framework" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="HelloWorld.cs" />
+    <Compile Include="MockContext.cs" />
+    <Compile Include="MockOwinEnv.cs" />
+    <Compile Include="Test.cs" />
+    <Compile Include="TestStream.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\SimpleStack.Serializers.Jsondotnet\SimpleStack.Serializers.Jsondotnet.csproj">
+      <Project>{4077dbef-cdd8-4c43-b403-042adf318ad0}</Project>
+      <Name>SimpleStack.Serializers.Jsondotnet</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SimpleStack.Swagger\SimpleStack.Swagger.csproj">
+      <Project>{01D3F057-7984-498F-8B0A-EB375701E204}</Project>
+      <Name>SimpleStack.Api.Swagger</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SimpleStack.Serializers.NServicekit\SimpleStack.Serializers.NServicekit.csproj">
+      <Project>{6373b436-7c47-408f-ba53-c526b88b34ad}</Project>
+      <Name>SimpleStack.NServiceKit</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SimpleStack\SimpleStack.csproj">
+      <Project>{3AA82AAE-E1EE-4FCF-B60B-6A7DC5EB80D9}</Project>
+      <Name>SimpleStack</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

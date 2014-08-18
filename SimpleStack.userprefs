@@ -1,0 +1,26 @@
+﻿<Properties GitUserInfo="UsingGIT">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="SimpleStack.Owin.Tests/Test.cs">
+    <Files>
+      <File FileName="SimpleStack.Owin.Tests/Test.cs" Line="8" Column="40" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State expanded="True">
+          <Node name="SimpleStack.Owin.Tests" expanded="True" selected="True" />
+        </State>
+      </Pad>
+      <Pad Id="MonoDevelop.NUnit.TestPad">
+        <State expanded="True" selected="True" />
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Breakpoint file="/home/flynn/Projects/SimpleStack.Owin/SimpleStack.Owin/Extensions/HttpRequestExtensions.cs" line="392" column="1" />
+      <Breakpoint file="/home/flynn/Projects/SimpleStack.Owin/SimpleStack.Owin/WebServiceException.cs" line="7" column="1" />
+      <Breakpoint file="/home/flynn/Projects/SimpleStack.Owin/SimpleStack.Owin.Tests/Test.cs" line="32" column="1" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

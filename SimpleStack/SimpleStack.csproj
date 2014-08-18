@@ -1,0 +1,250 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{3AA82AAE-E1EE-4FCF-B60B-6A7DC5EB80D9}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SimpleStack</RootNamespace>
+    <AssemblyName>SimpleStack</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Externalconsole>true</Externalconsole>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Externalconsole>true</Externalconsole>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <OutputPath>bin\Release\</OutputPath>
+    <Optimize>true</Optimize>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="log4net">
+      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Owin">
+      <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Owin">
+      <HintPath>..\packages\Microsoft.Owin.2.1.0\lib\net45\Microsoft.Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Extensions\DateTimeExtensions.cs" />
+    <Compile Include="Extensions\RequestContextExtensions.cs" />
+    <Compile Include="HttpResult.cs" />
+    <Compile Include="Interfaces\IContentTypeSerializer.cs" />
+    <Compile Include="Interfaces\IServiceBase.cs" />
+    <Compile Include="Interfaces\IServiceRunner.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Attributes\RouteAttribute.cs" />
+    <Compile Include="Interfaces\IServiceController.cs" />
+    <Compile Include="Interfaces\IRestPath.cs" />
+    <Compile Include="Interfaces\IServiceRoutes.cs" />
+    <Compile Include="Interfaces\IRequestContext.cs" />
+    <Compile Include="Interfaces\IFile.cs" />
+    <Compile Include="Interfaces\IRequestAttributes.cs" />
+    <Compile Include="Interfaces\IServiceInterfaces.cs" />
+    <Compile Include="Enums\EndpointAttributes.cs" />
+    <Compile Include="Service.cs" />
+    <Compile Include="ServiceController.cs" />
+    <Compile Include="Logging\Log4net.cs" />
+    <Compile Include="ServiceMetadata.cs" />
+    <Compile Include="ServiceRoutes.cs" />
+    <Compile Include="RestPath.cs" />
+    <Compile Include="Extensions\ReflectionExtensions.cs" />
+    <Compile Include="Env.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="AssemblyTypeDefinition.cs" />
+    <Compile Include="Extensions\StringExtensions.cs" />
+    <Compile Include="ServiceRunner.cs" />
+    <Compile Include="Tools\DateTimeSerializer.cs" />
+    <Compile Include="Tools\DoubleConverter.cs" />
+    <Compile Include="Tools\DtoUtils.cs" />
+    <Compile Include="Tools\PathUtils.cs" />
+    <Compile Include="Extensions\EnumerableExtensions.cs" />
+    <Compile Include="Tools\TypeAccessorcs.cs" />
+    <Compile Include="Tools\TypeConfig.cs" />
+    <Compile Include="Tools\TypeSerializer.cs" />
+    <Compile Include="Interfaces\ITypeFactory.cs" />
+    <Compile Include="Attributes\RestrictAttribute.cs" />
+    <Compile Include="Interfaces\IResolver.cs" />
+    <Compile Include="Interfaces\IRequiresRequestStream.cs" />
+    <Compile Include="Extensions\NServiceExecExtensions.cs" />
+    <Compile Include="HttpMethod.cs" />
+    <Compile Include="ActionContext.cs" />
+    <Compile Include="Interfaces\IHttpRequest.cs" />
+    <Compile Include="Enums\Format.cs" />
+    <Compile Include="Attributes\ApiMemberAttribute.cs" />
+    <Compile Include="Attributes\ApiAttribute.cs" />
+    <Compile Include="Tools\Delegates.cs" />
+    <Compile Include="Extensions\DictionnaryExtensions.cs" />
+    <Compile Include="WebServiceException.cs" />
+    <Compile Include="ResponseStatus.cs" />
+    <Compile Include="ResponseError.cs" />
+    <Compile Include="Interfaces\IHasResponseStatus.cs" />
+    <Compile Include="Tools\ReflectionUtils.cs" />
+    <Compile Include="Tools\AssignmentDefinition.cs" />
+    <Compile Include="Tools\PropertyInvoker.cs" />
+    <Compile Include="Extensions\EndpointAttributeExtensions.cs" />
+    <Compile Include="Enums\Feature.cs" />
+    <Compile Include="Extensions\ListExtensions.cs" />
+    <Compile Include="Tools\TypePair.cs" />
+    <Compile Include="Tools\TranslateListWithElements.cs" />
+    <Compile Include="Serializers\StringMapTypeDeserializer.cs" />
+    <Compile Include="Serializers\DataContractDeserializer.cs" />
+    <Compile Include="Interfaces\IStringDeserializer.cs" />
+    <Compile Include="Serializers\DataContractSerializer.cs" />
+    <Compile Include="Interfaces\IStringSerializer.cs" />
+    <Compile Include="Interfaces\IHasOptions.cs" />
+    <Compile Include="Interfaces\IHttpResult.cs" />
+    <Compile Include="Extensions\IPAddressExtensions.cs" />
+    <Compile Include="Interfaces\IHttpResponse.cs" />
+    <Compile Include="Interfaces\ICookies.cs" />
+    <Compile Include="Serializers\KeyValueDataContractDeserializer.cs" />
+    <Compile Include="Extensions\ByteArrayExtensions.cs" />
+    <Compile Include="Extensions\HttpRequestExtensions.cs" />
+    <Compile Include="ContentType.cs" />
+    <Compile Include="ServiceManager.cs" />
+    <Compile Include="Funq\Action.cs" />
+    <Compile Include="Funq\Container.Adapter.cs" />
+    <Compile Include="Funq\Container.Overloads.cs" />
+    <Compile Include="Funq\Container.cs" />
+    <Compile Include="Funq\Func.cs" />
+    <Compile Include="Funq\IFluentInterface.cs" />
+    <Compile Include="Funq\IFunqlet.cs" />
+    <Compile Include="Funq\Owner.cs" />
+    <Compile Include="Funq\ResolutionException.cs" />
+    <Compile Include="Funq\ReuseScope.cs" />
+    <Compile Include="Funq\ServiceEntry.Generic.cs" />
+    <Compile Include="Funq\ServiceEntry.cs" />
+    <Compile Include="Funq\ServiceKey.cs" />
+    <Compile Include="Funq\Syntax.cs" />
+    <Compile Include="Interfaces\IContainerAdapter.cs" />
+    <Compile Include="ContainerResolverCache.cs" />
+    <Compile Include="GServiceExec.cs" />
+    <Compile Include="NServiceExec.cs" />
+    <Compile Include="EndpointHostConfig.cs" />
+    <Compile Include="Tools\MetadataTypes.cs">
+      <DependentUpon>HttpError.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Extensions\FileExtension.cs" />
+    <Compile Include="RouteNamingConvention.cs" />
+    <Compile Include="IdUtils.cs" />
+    <Compile Include="Interfaces\IHasId.cs" />
+    <Compile Include="StaticAccessors.cs" />
+    <Compile Include="Metadata\ServiceEndpointsMetadataConfig.cs" />
+    <Compile Include="Metadata\MetadataConfig.cs" />
+    <Compile Include="Metadata\SoapMetadataConfig.cs" />
+    <Compile Include="Interfaces\ISimpleStackHttpHandler.cs" />
+    <Compile Include="Metadata\MetadataPagesConfig.cs" />
+    <Compile Include="_EndpointHost.cs" />
+    <Compile Include="Interfaces\IAppHost.cs" />
+    <Compile Include="Cache\MemoryCacheClient.cs" />
+    <Compile Include="Cache\ICacheClient.cs" />
+    <Compile Include="Cache\IRemoveByPattern.cs" />
+    <Compile Include="_AppHostBase.cs" />
+    <Compile Include="Interfaces\IRelease.cs" />
+    <Compile Include="Interfaces\IRequiresRequestContext.cs" />
+    <Compile Include="Interfaces\IContentTypeFilter.cs" />
+    <Compile Include="Interfaces\IContentTypeWriter.cs" />
+    <Compile Include="Interfaces\IContentTypeReader.cs" />
+    <Compile Include="SimpleStackComponent.cs" />
+    <Compile Include="SimpleStackAppBuilderExtension.cs" />
+    <Compile Include="OwinRequestWrapper.cs" />
+    <Compile Include="OwinResponseWrapper.cs" />
+    <Compile Include="Handlers\RestHandler.cs" />
+    <Compile Include="Extensions\HttpResponseExtensions.cs" />
+    <Compile Include="ErrorResponse.cs" />
+    <Compile Include="Handlers\_EndpointHandlerBase.cs" />
+    <Compile Include="Handlers\SimpleStackHttpHandlerFactory.cs" />
+    <Compile Include="Handlers\RedirectHttpHandler.cs" />
+    <Compile Include="HttpHeaders.cs" />
+    <Compile Include="Handlers\StaticFileHandler.cs" />
+    <Compile Include="Handlers\ForbiddenHttpHandler.cs" />
+    <Compile Include="Handlers\NotFoundHttpHandler.cs" />
+    <Compile Include="Interfaces\IRequiresHttpRequest.cs" />
+    <Compile Include="HostContext.cs" />
+    <Compile Include="Extensions\StreamExtensions.cs" />
+    <Compile Include="HttpRequestContext.cs" />
+    <Compile Include="Interfaces\IFactoryProvider.cs" />
+    <Compile Include="Tools\MimeTypes.cs" />
+    <Compile Include="Extensions\AssertExtensions.cs" />
+    <Compile Include="Tools\CompressionTypes.cs" />
+    <Compile Include="Extensions\HttpResultExtensions.cs" />
+    <Compile Include="Interfaces\IHttpError.cs" />
+    <Compile Include="Tools\HttpError.cs" />
+    <Compile Include="Handlers\IndexPageHttpHandler.cs" />
+    <Compile Include="Handlers\RequestInfoHttpHandler.cs" />
+    <Compile Include="RequestAttributes.cs" />
+    <Compile Include="HttpResponseFilter.cs" />
+    <Compile Include="HttpResponseStreamWrapper.cs" />
+    <Compile Include="SerializationContext.cs" />
+    <Compile Include="Serializers\Xml\XmlSerializer.cs" />
+    <Compile Include="Serializers\JsonDataContractDeserializer.cs" />
+    <Compile Include="Interfaces\ITextSerializer.cs" />
+    <Compile Include="Interfaces\IStreamWriter.cs" />
+    <Compile Include="Interfaces\IPartialWriter.cs" />
+    <Compile Include="CompressedResult.cs" />
+    <Compile Include="Config\SerializationConfig.cs" />
+    <Compile Include="Handlers\GenericHttpHandler.cs" />
+    <Compile Include="HttpFile.cs" />
+    <Compile Include="Tools\RequestBindingException.cs" />
+    <Compile Include="Extensions\PlateformExtensions.cs" />
+    <Compile Include="Tools\FilterAttributeCache.cs" />
+    <Compile Include="Interfaces\IHasRequestFilter.cs" />
+    <Compile Include="Interfaces\IHasResponseFilter.cs" />
+    <Compile Include="Serializers\Jsv\JsvReader.cs" />
+    <Compile Include="Serializers\Jsv\JsState.cs" />
+    <Compile Include="Serializers\Jsv\JsvWriter.cs" />
+    <Compile Include="Serializers\Jsv\JsvFormatter.cs" />
+    <Compile Include="Serializers\Jsv\JsvDeserializeType.cs" />
+    <Compile Include="Serializers\Json\JsonSerializer.cs" />
+    <Compile Include="Serializers\JsonDataContractSerializer.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="Funq\License.txt" />
+  </ItemGroup>
+</Project>
