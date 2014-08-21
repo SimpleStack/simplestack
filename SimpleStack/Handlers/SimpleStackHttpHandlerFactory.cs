@@ -28,116 +28,116 @@ namespace SimpleStack.Handlers
 		[ThreadStatic]
 		public static string DebugLastHandlerArgs;
 
-		static SimpleStackHttpHandlerFactory()
-		{
-			//TODO: vdaron : fix IsIntegratedPipeline ??
-			//MONO doesn't implement this property
-			System.Reflection.PropertyInfo pi = null;// typeof(HttpRuntime).GetProperty("UsingIntegratedPipeline");
-			if (pi != null)
-			{
-				IsIntegratedPipeline = (bool)pi.GetGetMethod().Invoke(null, new object[0]);
-			}
+//		static SimpleStackHttpHandlerFactory()
+//		{
+//			//TODO: vdaron : fix IsIntegratedPipeline ??
+//			//MONO doesn't implement this property
+//			System.Reflection.PropertyInfo pi = null;// typeof(HttpRuntime).GetProperty("UsingIntegratedPipeline");
+//			if (pi != null)
+//			{
+//				IsIntegratedPipeline = (bool)pi.GetGetMethod().Invoke(null, new object[0]);
+//			}
 
-			var config = EndpointHost.Config;
-			if (config == null)
-			{
-				throw new ConfigurationErrorsException(
-					"ServiceStack: AppHost does not exist or has not been initialized. "
-					+ "Make sure you have created an AppHost and started it with 'new AppHost().Init();' in your Global.asax Application_Start()",
-					new ArgumentNullException("EndpointHost.Config"));
-			}
+//			var config = EndpointHost.Config;
+//			if (config == null)
+//			{
+//				throw new ConfigurationErrorsException(
+//					"ServiceStack: AppHost does not exist or has not been initialized. "
+//					+ "Make sure you have created an AppHost and started it with 'new AppHost().Init();' in your Global.asax Application_Start()",
+//					new ArgumentNullException("EndpointHost.Config"));
+//			}
 
-			var isAspNetHost = false;// HttpListenerBase.Instance == null || HttpContext.Current != null;
-			WebHostPhysicalPath = config.WebHostPhysicalPath;
-			AutoRedirectsDirs = isAspNetHost && !Env.IsMono;
+//			var isAspNetHost = false;// HttpListenerBase.Instance == null || HttpContext.Current != null;
+//			WebHostPhysicalPath = config.WebHostPhysicalPath;
+//			AutoRedirectsDirs = isAspNetHost && !Env.IsMono;
 
-			//Apache+mod_mono treats path="servicestack*" as path="*" so takes over root path, so we need to serve matching resources
-			var hostedAtRootPath = config.ServiceStackHandlerFactoryPath == null;
+//			//Apache+mod_mono treats path="servicestack*" as path="*" so takes over root path, so we need to serve matching resources
+//			var hostedAtRootPath = config.ServiceStackHandlerFactoryPath == null;
 
-			//DefaultHttpHandler not supported in IntegratedPipeline mode
-//			if (!IsIntegratedPipeline && isAspNetHost && !hostedAtRootPath && !Env.IsMono)
-//				DefaultHttpHandler = new DefaultHttpHandler();
+//			//DefaultHttpHandler not supported in IntegratedPipeline mode
+////			if (!IsIntegratedPipeline && isAspNetHost && !hostedAtRootPath && !Env.IsMono)
+////				DefaultHttpHandler = new DefaultHttpHandler();
 
-			ServeDefaultHandler = hostedAtRootPath || Env.IsMono;
-			if (ServeDefaultHandler && !String.IsNullOrEmpty(WebHostPhysicalPath))
-			{
-				foreach (var filePath in Directory.GetFiles(WebHostPhysicalPath))
-				{
-					var fileNameLower = Path.GetFileName(filePath).ToLower();
-					if (DefaultRootFileName == null && config.DefaultDocuments.Contains(fileNameLower))
-					{
-						//Can't serve Default.aspx pages when hostedAtRootPath so ignore and allow for next default document
-						if (!(hostedAtRootPath && fileNameLower.EndsWith(".aspx")))
-						{
-							DefaultRootFileName = fileNameLower;
-							((StaticFileHandler)StaticFileHandler).SetDefaultFile(filePath);
+//			ServeDefaultHandler = hostedAtRootPath || Env.IsMono;
+//			if (ServeDefaultHandler && !String.IsNullOrEmpty(WebHostPhysicalPath))
+//			{
+//				foreach (var filePath in Directory.GetFiles(WebHostPhysicalPath))
+//				{
+//					var fileNameLower = Path.GetFileName(filePath).ToLower();
+//					if (DefaultRootFileName == null && config.DefaultDocuments.Contains(fileNameLower))
+//					{
+//						//Can't serve Default.aspx pages when hostedAtRootPath so ignore and allow for next default document
+//						if (!(hostedAtRootPath && fileNameLower.EndsWith(".aspx")))
+//						{
+//							DefaultRootFileName = fileNameLower;
+//							((StaticFileHandler)StaticFileHandler).SetDefaultFile(filePath);
 
-							if (DefaultHttpHandler == null)
-								DefaultHttpHandler = new RedirectHttpHandler { RelativeUrl = DefaultRootFileName };
-						}
-					}
-					WebHostRootFileNames.Add(Path.GetFileName(fileNameLower));
-				}
-				foreach (var dirName in Directory.GetDirectories(WebHostPhysicalPath))
-				{
-					var dirNameLower = Path.GetFileName(dirName).ToLower();
-					WebHostRootFileNames.Add(Path.GetFileName(dirNameLower));
-				}
-			}
+//							if (DefaultHttpHandler == null)
+//								DefaultHttpHandler = new RedirectHttpHandler { RelativeUrl = DefaultRootFileName };
+//						}
+//					}
+//					WebHostRootFileNames.Add(Path.GetFileName(fileNameLower));
+//				}
+//				foreach (var dirName in Directory.GetDirectories(WebHostPhysicalPath))
+//				{
+//					var dirNameLower = Path.GetFileName(dirName).ToLower();
+//					WebHostRootFileNames.Add(Path.GetFileName(dirNameLower));
+//				}
+//			}
 
-			if (!string.IsNullOrEmpty(config.DefaultRedirectPath))
-				DefaultHttpHandler = new RedirectHttpHandler { RelativeUrl = config.DefaultRedirectPath };
+//			if (!string.IsNullOrEmpty(config.DefaultRedirectPath))
+//				DefaultHttpHandler = new RedirectHttpHandler { RelativeUrl = config.DefaultRedirectPath };
 
-			if (DefaultHttpHandler == null && !string.IsNullOrEmpty(config.MetadataRedirectPath))
-				DefaultHttpHandler = new RedirectHttpHandler { RelativeUrl = config.MetadataRedirectPath };
+//			if (DefaultHttpHandler == null && !string.IsNullOrEmpty(config.MetadataRedirectPath))
+//				DefaultHttpHandler = new RedirectHttpHandler { RelativeUrl = config.MetadataRedirectPath };
 
-			if (!string.IsNullOrEmpty(config.MetadataRedirectPath))
-				NonRootModeDefaultHttpHandler = new RedirectHttpHandler { RelativeUrl = config.MetadataRedirectPath };
+//			if (!string.IsNullOrEmpty(config.MetadataRedirectPath))
+//				NonRootModeDefaultHttpHandler = new RedirectHttpHandler { RelativeUrl = config.MetadataRedirectPath };
 
-			if (DefaultHttpHandler == null)
-				DefaultHttpHandler = NotFoundHttpHandler;
+//			if (DefaultHttpHandler == null)
+//				DefaultHttpHandler = NotFoundHttpHandler;
 
-			var defaultRedirectHanlder = DefaultHttpHandler as RedirectHttpHandler;
-			var debugDefaultHandler = defaultRedirectHanlder != null
-				? defaultRedirectHanlder.RelativeUrl
-				: "typeof(DefaultHttpHandler).Name";
+//			var defaultRedirectHanlder = DefaultHttpHandler as RedirectHttpHandler;
+//			var debugDefaultHandler = defaultRedirectHanlder != null
+//				? defaultRedirectHanlder.RelativeUrl
+//				: "typeof(DefaultHttpHandler).Name";
 
-			SetApplicationBaseUrl(config.WebHostUrl);
+//			SetApplicationBaseUrl(config.WebHostUrl);
 
-			ForbiddenHttpHandler = config.GetHandlerForErrorStatus(HttpStatusCode.Forbidden);
-			if (ForbiddenHttpHandler == null)
-			{
-				ForbiddenHttpHandler = new ForbiddenHttpHandler
-				{
-					IsIntegratedPipeline = IsIntegratedPipeline,
-					WebHostPhysicalPath = WebHostPhysicalPath,
-					WebHostRootFileNames = WebHostRootFileNames,
-					ApplicationBaseUrl = ApplicationBaseUrl,
-					DefaultRootFileName = DefaultRootFileName,
-					DefaultHandler = debugDefaultHandler,
-				};
-			}
+//			ForbiddenHttpHandler = config.GetHandlerForErrorStatus(HttpStatusCode.Forbidden);
+//			if (ForbiddenHttpHandler == null)
+//			{
+//				ForbiddenHttpHandler = new ForbiddenHttpHandler
+//				{
+//					IsIntegratedPipeline = IsIntegratedPipeline,
+//					WebHostPhysicalPath = WebHostPhysicalPath,
+//					WebHostRootFileNames = WebHostRootFileNames,
+//					ApplicationBaseUrl = ApplicationBaseUrl,
+//					DefaultRootFileName = DefaultRootFileName,
+//					DefaultHandler = debugDefaultHandler,
+//				};
+//			}
 
-			NotFoundHttpHandler = config.GetHandlerForErrorStatus(HttpStatusCode.NotFound);
-			if (NotFoundHttpHandler == null)
-			{
-				NotFoundHttpHandler = new NotFoundHttpHandler
-				{
-					IsIntegratedPipeline = IsIntegratedPipeline,
-					WebHostPhysicalPath = WebHostPhysicalPath,
-					WebHostRootFileNames = WebHostRootFileNames,
-					ApplicationBaseUrl = ApplicationBaseUrl,
-					DefaultRootFileName = DefaultRootFileName,
-					DefaultHandler = debugDefaultHandler,
-				};
-			}
+//			NotFoundHttpHandler = config.GetHandlerForErrorStatus(HttpStatusCode.NotFound);
+//			if (NotFoundHttpHandler == null)
+//			{
+//				NotFoundHttpHandler = new NotFoundHttpHandler
+//				{
+//					IsIntegratedPipeline = IsIntegratedPipeline,
+//					WebHostPhysicalPath = WebHostPhysicalPath,
+//					WebHostRootFileNames = WebHostRootFileNames,
+//					ApplicationBaseUrl = ApplicationBaseUrl,
+//					DefaultRootFileName = DefaultRootFileName,
+//					DefaultHandler = debugDefaultHandler,
+//				};
+//			}
 
-			var rawHandlers = config.RawHttpHandlers;
-			//rawHandlers.Add(ReturnRequestInfo);
-			//TODO: vdaron restore MiniProfiler
-			//rawHandlers.Add(MiniProfilerHandler.MatchesRequest);
-			RawHttpHandlers = rawHandlers.ToArray();
-		}
+//			var rawHandlers = config.RawHttpHandlers;
+//			//rawHandlers.Add(ReturnRequestInfo);
+//			//TODO: vdaron restore MiniProfiler
+//			//rawHandlers.Add(MiniProfilerHandler.MatchesRequest);
+//			RawHttpHandlers = rawHandlers.ToArray();
+//		}
 
 //		// Entry point for ASP.NET
 //		public IHttpHandler GetHandler(HttpContext context, string requestType, string url, string pathTranslated)
@@ -218,51 +218,50 @@ namespace SimpleStack.Handlers
 
 		public static ISimpleStackHttpHandler GetHandler(IHttpRequest httpReq)
 		{
-			foreach (var rawHttpHandler in RawHttpHandlers)
-			{
-				var reqInfo = rawHttpHandler(httpReq);
-				if (reqInfo != null) 
-					return reqInfo;
-			}
+			//foreach (var rawHttpHandler in RawHttpHandlers)
+			//{
+			//	var reqInfo = rawHttpHandler(httpReq);
+			//	if (reqInfo != null) 
+			//		return reqInfo;
+			//}
 
 			var mode = EndpointHost.Config.ServiceStackHandlerFactoryPath;
 			var pathInfo = httpReq.PathInfo;
 
 			//Default Request /
-			if (string.IsNullOrEmpty(pathInfo) || pathInfo == "/")
-			{
-				if (ApplicationBaseUrl == null)
-					SetApplicationBaseUrl(httpReq.GetPathUrl());
+			//if (string.IsNullOrEmpty(pathInfo) || pathInfo == "/")
+			//{
+			//	if (ApplicationBaseUrl == null)
+			//		SetApplicationBaseUrl(httpReq.GetPathUrl());
 
-				//e.g. CatchAllHandler to Process Markdown files
-				var catchAllHandler = GetCatchAllHandlerIfAny(httpReq.HttpMethod, pathInfo, httpReq.GetPhysicalPath());
-				if (catchAllHandler != null)
-					return catchAllHandler;
+			//	//e.g. CatchAllHandler to Process Markdown files
+			//	var catchAllHandler = GetCatchAllHandlerIfAny(httpReq.HttpMethod, pathInfo, httpReq.GetPhysicalPath());
+			//	if (catchAllHandler != null)
+			//		return catchAllHandler;
 
-				return ServeDefaultHandler ? DefaultHttpHandler : NonRootModeDefaultHttpHandler;
-			}
+			//	return ServeDefaultHandler ? DefaultHttpHandler : NonRootModeDefaultHttpHandler;
+			//}
 
-			if (mode != null && pathInfo.EndsWith(mode))
-			{
-				var requestPath = pathInfo;
-				if (requestPath == "/" + mode
-					|| requestPath == mode
-					|| requestPath == mode + "/")
-				{
-					//TODO: write test for this
-					if (httpReq.GetPhysicalPath() != WebHostPhysicalPath
-						|| !File.Exists(Path.Combine(httpReq.ApplicationFilePath, DefaultRootFileName ?? "")))
-					{
-						return new IndexPageHttpHandler();
-					}
-				}
+			//if (mode != null && pathInfo.EndsWith(mode))
+			//{
+			//	var requestPath = pathInfo;
+			//	if (requestPath == "/" + mode
+			//		|| requestPath == mode
+			//		|| requestPath == mode + "/")
+			//	{
+			//		//TODO: write test for this
+			//		if (httpReq.GetPhysicalPath() != WebHostPhysicalPath
+			//			|| !File.Exists(Path.Combine(httpReq.ApplicationFilePath, DefaultRootFileName ?? "")))
+			//		{
+			//			return new IndexPageHttpHandler();
+			//		}
+			//	}
 
-				var okToServe = ShouldAllow(httpReq.GetPhysicalPath());
-				return okToServe ? DefaultHttpHandler : ForbiddenHttpHandler;
-			}
+			//	var okToServe = ShouldAllow(httpReq.GetPhysicalPath());
+			//	return okToServe ? DefaultHttpHandler : ForbiddenHttpHandler;
+			//}
 
-			return GetHandlerForPathInfo(httpReq.HttpMethod, pathInfo, pathInfo, httpReq.GetPhysicalPath())
-				?? NotFoundHttpHandler;
+			return GetHandlerForPathInfo(httpReq.HttpMethod, pathInfo, pathInfo, httpReq.GetPhysicalPath());// ?? NotFoundHttpHandler;
 		}
 
 

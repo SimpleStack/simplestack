@@ -290,13 +290,12 @@ namespace SimpleStack
 //				}
 //			}
 //		}
-			
 
-		public async Task ProcessRequest(IOwinContext context)
+		public async Task<bool> ProcessRequest(IOwinContext context)
 		{
 			try
 			{
-				await this.InnerProcessRequest(context);
+				return await InnerProcessRequest(context);
 			}
 			catch (Exception ex)
 			{
@@ -326,26 +325,27 @@ namespace SimpleStack
 
 					//TODO : Error mgmt
 					//return context.Response.Body.WriteAsync(sbBytes, 0, sbBytes.Length);
+					return true; 
 				}
 				catch (Exception errorEx)
 				{
 					Log.ErrorFormat("Error this.ProcessRequest(context)(Exception while writing error to the response): [{0}]: {1}", errorEx.GetType().Name, errorEx.Message);
+					return false;
 				}
 			}
 		}
 
-		protected async Task InnerProcessRequest(IOwinContext context)
+		protected async Task<bool> InnerProcessRequest(IOwinContext context)
 		{
-			if (context.Request.Uri == null) return;
+			if (context.Request.Uri == null) 
+				return false;
 
 			var operationName = context.Request.Uri.Segments[context.Request.Uri.Segments.Length - 1];
 
 			var httpReq = new OwinRequestWrapper(operationName, context.Request);
 			var httpRes = new OwinResponseWrapper(context.Response);
 
-			var handler = SimpleStackHttpHandlerFactory.GetHandler(httpReq);
-
-			var simpleStackHttpHandler = handler;
+			var simpleStackHttpHandler = SimpleStackHttpHandlerFactory.GetHandler(httpReq);
 			if (simpleStackHttpHandler != null)
 			{
 				var restHandler = simpleStackHttpHandler as RestHandler;
@@ -355,10 +355,13 @@ namespace SimpleStack
 				}
 				simpleStackHttpHandler.ProcessRequest(httpReq, httpRes, operationName);
 				httpRes.Close();
-				return;
+				return true;
 			}
 
-			throw new NotImplementedException("Cannot execute handler: " + handler + " at PathInfo: " + httpReq.PathInfo);
+			return false;
+
+
+			//throw new NotImplementedException("Cannot execute handler: " + simpleStackHttpHandler + " at PathInfo: " + httpReq.PathInfo);
 		}
 
 		private static ISimpleStackHttpHandler ProcessPredefinedRoutesRequest(string httpMethod, string pathInfo, string filePath)

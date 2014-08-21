@@ -60,7 +60,7 @@ namespace SimpleStack.Tests
 		{
 			using (var ctx = new MockContext(new MockOwinEnv("GET", "/Hello", "Name=World")))
 			{
-				_appHost.ProcessRequest(ctx).Wait();
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
 
 				Assert.AreEqual(200, ctx.Response.StatusCode);
 				Assert.AreEqual("Hello, World", ctx.GetResponseBodyAs<HelloResponse>().Result);
@@ -72,7 +72,7 @@ namespace SimpleStack.Tests
 		{
 			using (var ctx = new MockContext(new MockOwinEnv("GET", "/Hello/Bob")))
 			{
-				_appHost.ProcessRequest(ctx).Wait();
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
 
 				Assert.AreEqual(200, ctx.Response.StatusCode);
 
@@ -85,7 +85,7 @@ namespace SimpleStack.Tests
 		{
 			using (var ctx = new MockContext(new MockOwinEnv("GET", "/throw-empty")))
 			{
-				_appHost.ProcessRequest(ctx).Wait();
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
 
 				Assert.AreEqual(500, ctx.Response.StatusCode);
 
@@ -102,7 +102,7 @@ namespace SimpleStack.Tests
 		{
 			using (var ctx = new MockContext(new MockOwinEnv("GET", "/throw-httperror")))
 			{
-				_appHost.ProcessRequest(ctx).Wait();
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
 
 				Assert.AreEqual(500, ctx.Response.StatusCode);
 
@@ -119,8 +119,7 @@ namespace SimpleStack.Tests
 		{
 			using (var ctx = new MockContext(new MockOwinEnv("GET", "/throw-detail")))
 			{
-
-				_appHost.ProcessRequest(ctx).Wait();
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
 
 				Assert.AreEqual(500, ctx.Response.StatusCode);
 				Assert.AreNotEqual(0, ctx.Response.Body.Length);
@@ -139,7 +138,7 @@ namespace SimpleStack.Tests
 		{
 			using (var ctx = new MockContext(new MockOwinEnv("GET", "/throw-detail-ihasresponsestatus")))
 			{
-				_appHost.ProcessRequest(ctx).Wait();
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
 
 				Assert.AreEqual(500, ctx.Response.StatusCode);
 				Assert.AreNotEqual(0, ctx.Response.Body.Length);
@@ -158,10 +157,7 @@ namespace SimpleStack.Tests
 		{
 			using (var ctx = new MockContext(new MockOwinEnv("GET", "/unknownroute")))
 			{
-				_appHost.ProcessRequest(ctx).Wait();
-
-				Assert.AreEqual(404, ctx.Response.StatusCode);
-				Assert.AreNotEqual(0, ctx.Response.Body.Length);
+				Assert.IsFalse(_appHost.ProcessRequest(ctx).Result);
 			}
 		}
 
@@ -170,7 +166,7 @@ namespace SimpleStack.Tests
 		{
 			using (var ctx = new MockContext(new MockOwinEnv("GET", "/conflict")))
 			{
-				_appHost.ProcessRequest(ctx).Wait();
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
 
 				Assert.AreEqual(409, ctx.Response.StatusCode);
 			}
@@ -181,7 +177,7 @@ namespace SimpleStack.Tests
 		{
 			using (var ctx = new MockContext(new MockOwinEnv("GET", "/hello-somestringinterface")))
 			{
-				_appHost.ProcessRequest(ctx).Wait();
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
 
 				Assert.AreEqual(200, ctx.Response.StatusCode);
 
