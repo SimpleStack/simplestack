@@ -24,11 +24,14 @@ namespace SimpleStack
 	public delegate object ActionInvokerFn(object intance, object request);
 	public delegate void VoidActionInvokerFn(object intance, object request);
 
-	public class ServiceController
-		: IServiceController
+	public class ServiceController : IServiceController
 	{
 		private static readonly ILog Log = Logger.CreateLog();
 		private const string ResponseDtoSuffix = "Response";
+
+		private IResolver _resolver;
+		readonly Dictionary<Type, ServiceExecFn> _requestExecMap = new Dictionary<Type, ServiceExecFn>();
+		readonly Dictionary<Type, RestrictAttribute> _requestServiceAttrs = new Dictionary<Type, RestrictAttribute>();
 
 		public ServiceController(Func<IEnumerable<Type>> resolveServicesFn, ServiceMetadata metadata = null)
 		{
@@ -38,10 +41,6 @@ namespace SimpleStack
 			this.EnableAccessRestrictions = true;
 			this.ResolveServicesFn = resolveServicesFn;
 		}
-
-		readonly Dictionary<Type, ServiceExecFn> requestExecMap = new Dictionary<Type, ServiceExecFn>();
-
-		readonly Dictionary<Type, RestrictAttribute> requestServiceAttrs = new Dictionary<Type, RestrictAttribute>();
 
 		public bool EnableAccessRestrictions { get; set; }
 
@@ -53,11 +52,10 @@ namespace SimpleStack
 
 		public IServiceRoutes Routes { get { return Metadata.Routes; } }
 
-		private IResolver resolver;
 		public IResolver Resolver
 		{
-			get { return resolver ?? EndpointHost.AppHost; }
-			set { resolver = value; }
+			get { return _resolver ?? EndpointHost.AppHost; }
+			set { _resolver = value; }
 		}
 
 		public Func<IEnumerable<Type>> ResolveServicesFn { get; set; }
@@ -88,29 +86,29 @@ namespace SimpleStack
 			}
 		}
 
-		[Obsolete("use obsolete api")]
-		public void RegisterGService(ITypeFactory serviceFactoryFn, Type serviceType)
-		{
-			if (serviceType.IsAbstract || serviceType.ContainsGenericParameters) return;
+//		[Obsolete("use obsolete api")]
+//		public void RegisterGService(ITypeFactory serviceFactoryFn, Type serviceType)
+//		{
+//			if (serviceType.IsAbstract || serviceType.ContainsGenericParameters) return;
 
-			//IService<T>
-			foreach (var service in serviceType.GetInterfaces())
-			{
-//TODO: vdaron : check this deprecated call
-//				if (!service.IsGenericType
-//					|| service.GetGenericTypeDefinition() != typeof(IService<>)
-//				) continue;
+//			//IService<T>
+//			foreach (var service in serviceType.GetInterfaces())
+//			{
+////TODO: vdaron : check this deprecated call
+////				if (!service.IsGenericType
+////					|| service.GetGenericTypeDefinition() != typeof(IService<>)
+////				) continue;
 
-				var requestType = service.GetGenericArguments()[0];
+//				var requestType = service.GetGenericArguments()[0];
 
-				RegisterGServiceExecutor(requestType, serviceType, serviceFactoryFn);
+//				RegisterGServiceExecutor(requestType, serviceType, serviceFactoryFn);
 
-				var responseTypeName = requestType.FullName + ResponseDtoSuffix;
-				var responseType = AssemblyUtils.FindType(responseTypeName);
+//				var responseTypeName = requestType.FullName + ResponseDtoSuffix;
+//				var responseType = AssemblyUtils.FindType(responseTypeName);
 
-				RegisterCommon(serviceType, requestType, responseType);
-			}
-		}
+//				RegisterCommon(serviceType, requestType, responseType);
+//			}
+//		}
 
 		public void RegisterNService(ITypeFactory serviceFactoryFn, Type serviceType)
 		{
@@ -277,43 +275,43 @@ namespace SimpleStack
 			}
 		}
 
-		[Obsolete("obsolete ?")]
-		public void Register(Type requestType, Type serviceType)
-		{
-			var handlerFactoryFn = Expression.Lambda<Func<Type, object>>
-			(
-				Expression.New(serviceType),
-				Expression.Parameter(typeof(Type), "serviceType")
-			).Compile();
+		//[Obsolete("obsolete ?")]
+		//public void Register(Type requestType, Type serviceType)
+		//{
+		//	var handlerFactoryFn = Expression.Lambda<Func<Type, object>>
+		//	(
+		//		Expression.New(serviceType),
+		//		Expression.Parameter(typeof(Type), "serviceType")
+		//	).Compile();
 
-			RegisterGServiceExecutor(requestType, serviceType, new TypeFactoryWrapper(handlerFactoryFn));
-		}
-		[Obsolete("obsolete ?")]
-		public void Register(Type requestType, Type serviceType, Func<Type, object> handlerFactoryFn)
-		{
-			RegisterGServiceExecutor(requestType, serviceType, new TypeFactoryWrapper(handlerFactoryFn));
-		}
+		//	RegisterGServiceExecutor(requestType, serviceType, new TypeFactoryWrapper(handlerFactoryFn));
+		//}
+		//[Obsolete("obsolete ?")]
+		//public void Register(Type requestType, Type serviceType, Func<Type, object> handlerFactoryFn)
+		//{
+		//	RegisterGServiceExecutor(requestType, serviceType, new TypeFactoryWrapper(handlerFactoryFn));
+		//}
 
-		[Obsolete("use obsolete api")]
-		public void RegisterGServiceExecutor(Type requestType, Type serviceType, ITypeFactory serviceFactoryFn)
-		{
-			var typeFactoryFn = CallServiceExecuteGeneric(requestType, serviceType);
+		//[Obsolete("use obsolete api")]
+		//public void RegisterGServiceExecutor(Type requestType, Type serviceType, ITypeFactory serviceFactoryFn)
+		//{
+		//	var typeFactoryFn = CallServiceExecuteGeneric(requestType, serviceType);
 
-			ServiceExecFn handlerFn = (requestContext, dto) => {
-				var service = serviceFactoryFn.CreateInstance(serviceType);
+		//	ServiceExecFn handlerFn = (requestContext, dto) => {
+		//		var service = serviceFactoryFn.CreateInstance(serviceType);
 
-				var endpointAttrs = requestContext != null
-					? requestContext.EndpointAttributes
-					: EndpointAttributes.None;
+		//		var endpointAttrs = requestContext != null
+		//			? requestContext.EndpointAttributes
+		//			: EndpointAttributes.None;
 
-				ServiceExecFn serviceExec = (reqCtx, req) =>
-					typeFactoryFn(req, service, endpointAttrs);
+		//		ServiceExecFn serviceExec = (reqCtx, req) =>
+		//			typeFactoryFn(req, service, endpointAttrs);
 
-				return ManagedServiceExec(serviceExec, service, requestContext, dto);
-			};
+		//		return ManagedServiceExec(serviceExec, service, requestContext, dto);
+		//	};
 
-			AddToRequestExecMap(requestType, serviceType, handlerFn);
-		}
+		//	AddToRequestExecMap(requestType, serviceType, handlerFn);
+		//}
 
 		public void RegisterNServiceExecutor(Type requestType, Type serviceType, ITypeFactory serviceFactoryFn)
 		{
@@ -334,7 +332,7 @@ namespace SimpleStack
 
 		private void AddToRequestExecMap(Type requestType, Type serviceType, ServiceExecFn handlerFn)
 		{
-			if (requestExecMap.ContainsKey(requestType))
+			if (_requestExecMap.ContainsKey(requestType))
 			{
 				throw new AmbiguousMatchException(
 					string.Format(
@@ -343,12 +341,12 @@ namespace SimpleStack
 						requestType.FullName, serviceType.FullName));
 			}
 
-			requestExecMap.Add(requestType, handlerFn);
+			_requestExecMap.Add(requestType, handlerFn);
 
 			var serviceAttrs = requestType.GetCustomAttributes(typeof(RestrictAttribute), false);
 			if (serviceAttrs.Length > 0)
 			{
-				requestServiceAttrs.Add(requestType, (RestrictAttribute)serviceAttrs[0]);
+				_requestServiceAttrs.Add(requestType, (RestrictAttribute)serviceAttrs[0]);
 			}
 		}
 
@@ -467,7 +465,7 @@ namespace SimpleStack
 		public ServiceExecFn GetService(Type requestType)
 		{
 			ServiceExecFn handlerFn;
-			if (!requestExecMap.TryGetValue(requestType, out handlerFn))
+			if (!_requestExecMap.TryGetValue(requestType, out handlerFn))
 			{
 				throw new NotImplementedException(string.Format("Unable to resolve service '{0}'", requestType.Name));
 			}
@@ -488,7 +486,7 @@ namespace SimpleStack
 			if (EndpointHost.Config != null && !EndpointHost.Config.EnableAccessRestrictions) return;
 
 			RestrictAttribute restrictAttr;
-			var hasNoAccessRestrictions = !requestServiceAttrs.TryGetValue(requestType, out restrictAttr)
+			var hasNoAccessRestrictions = !_requestServiceAttrs.TryGetValue(requestType, out restrictAttr)
 				|| restrictAttr.HasNoAccessRestrictions;
 
 			if (hasNoAccessRestrictions)

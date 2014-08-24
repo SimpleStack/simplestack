@@ -1,12 +1,8 @@
 ﻿using System;
 using Funq;
-using SimpleStack.Serializers;
 using SimpleStack.Metadata;
 using SimpleStack.Enums;
-
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using SimpleStack.Interfaces;
 using SimpleStack.Extensions;
 using SimpleStack.Cache;

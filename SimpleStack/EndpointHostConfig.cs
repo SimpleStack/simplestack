@@ -22,6 +22,9 @@ namespace SimpleStack
 	{
 		private static ILog log = Logger.CreateLog();
 
+		private string _defaultOperationNamespace;
+		private EndpointAttributes _metadataVisibility;
+
 		public static bool SkipPathValidation = false;
 		/// <summary>
 		/// Use: \[Route\("[^\/]  regular expression to find violating routes in your sln
@@ -279,37 +282,37 @@ namespace SimpleStack
 //			}
 //		}
 //
-		private static void SetPaths(string handlerPath, string locationPath)
-		{
-			if (handlerPath == null) return;
+		//private static void SetPaths(string handlerPath, string locationPath)
+		//{
+		//	if (handlerPath == null) return;
 
-			if (locationPath == null)
-			{
-				handlerPath = handlerPath.Replace("*", String.Empty);
-			}
+		//	if (locationPath == null)
+		//	{
+		//		handlerPath = handlerPath.Replace("*", String.Empty);
+		//	}
 
-			instance.SimpleStackHandlerFactoryPath = locationPath ?? (string.IsNullOrEmpty(handlerPath) ? null : handlerPath);
+		//	instance.SimpleStackHandlerFactoryPath = locationPath ?? (string.IsNullOrEmpty(handlerPath) ? null : handlerPath);
 
-			instance.MetadataRedirectPath = PathUtils.CombinePaths(
-				null != locationPath ? instance.SimpleStackHandlerFactoryPath : handlerPath, "metadata");
-		}
+		//	instance.MetadataRedirectPath = PathUtils.CombinePaths(
+		//		null != locationPath ? instance.SimpleStackHandlerFactoryPath : handlerPath, "metadata");
+		//}
 
-		private static string ExtractHandlerPathFromWebServerConfigurationXml(string rawXml)
-		{
-			return XDocument.Parse(rawXml).Root.Element("handlers")
-				.Descendants("add")
-				.Where(handler => EnsureHandlerTypeAttribute(handler).StartsWith("ServiceStack"))
-				.Select(handler => handler.Attribute("path").Value)
-				.FirstOrDefault();
-		}
-		private static string EnsureHandlerTypeAttribute(XElement handler)
-		{
-			if (handler.Attribute("type") != null && !string.IsNullOrEmpty(handler.Attribute("type").Value))
-			{
-				return handler.Attribute("type").Value;
-			}
-			return string.Empty;
-		}
+		//private static string ExtractHandlerPathFromWebServerConfigurationXml(string rawXml)
+		//{
+		//	return XDocument.Parse(rawXml).Root.Element("handlers")
+		//		.Descendants("add")
+		//		.Where(handler => EnsureHandlerTypeAttribute(handler).StartsWith("ServiceStack"))
+		//		.Select(handler => handler.Attribute("path").Value)
+		//		.FirstOrDefault();
+		//}
+		//private static string EnsureHandlerTypeAttribute(XElement handler)
+		//{
+		//	if (handler.Attribute("type") != null && !string.IsNullOrEmpty(handler.Attribute("type").Value))
+		//	{
+		//		return handler.Attribute("type").Value;
+		//	}
+		//	return string.Empty;
+		//}
 
 		public ServiceManager ServiceManager { get; internal set; }
 		public ServiceMetadata Metadata { get { return ServiceManager.Metadata; } }
@@ -319,11 +322,10 @@ namespace SimpleStack
 		public string WsdlServiceNamespace { get; set; }
 		public string WsdlSoapActionNamespace { get; set; }
 
-		private EndpointAttributes metadataVisibility;
 		public EndpointAttributes MetadataVisibility
 		{
-			get { return metadataVisibility; }
-			set { metadataVisibility = value.ToAllowedFlagsSet(); }
+			get { return _metadataVisibility; }
+			set { _metadataVisibility = value.ToAllowedFlagsSet(); }
 		}
 
 		public string MetadataPageBodyHtml { get; set; }
@@ -381,26 +383,25 @@ namespace SimpleStack
 
 		public bool UseHttpsLinks { get; set; }
 
-		private string defaultOperationNamespace;
 		public string DefaultOperationNamespace
 		{
 			get
 			{
-				if (this.defaultOperationNamespace == null)
+				if (this._defaultOperationNamespace == null)
 				{
-					this.defaultOperationNamespace = GetDefaultNamespace();
+					this._defaultOperationNamespace = GetDefaultNamespace();
 				}
-				return this.defaultOperationNamespace;
+				return this._defaultOperationNamespace;
 			}
 			set
 			{
-				this.defaultOperationNamespace = value;
+				this._defaultOperationNamespace = value;
 			}
 		}
 
 		private string GetDefaultNamespace()
 		{
-			if (!String.IsNullOrEmpty(this.defaultOperationNamespace)
+			if (!String.IsNullOrEmpty(this._defaultOperationNamespace)
 				|| this.ServiceController == null) return null;
 
 			foreach (var operationType in this.Metadata.RequestTypes)

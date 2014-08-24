@@ -222,6 +222,7 @@ namespace SimpleStack.Tests
 				Assert.AreEqual("Hello Has been Ignored !", response.Result);
 			}
 		}
+
 		[Test]
 		public void TestHelloServiceWithMappingAndBasePath()
 		{
@@ -259,6 +260,30 @@ namespace SimpleStack.Tests
 				var response = ctx.GetResponseBodyAs<HelloResponse>();
 
 				Assert.AreEqual("Hello, ", response.Result);
+			}
+		}
+
+		[Test]
+		public void TestRouteWithContentTypeAsFormat()
+		{
+			using (var ctx = new MockContext(new MockOwinEnv("GET", "/Hello/Bob?format=json")))
+			{
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
+
+				Assert.AreEqual(200, ctx.Response.StatusCode);
+				Assert.IsTrue(ctx.Response.ContentType.StartsWith(ContentType.Json));
+
+				Assert.AreEqual("Hello, Bob", ctx.GetResponseBodyAs<HelloResponse>().Result);
+			}
+
+			using (var ctx = new MockContext(new MockOwinEnv("GET", "/Hello/Bob?format=xml")))
+			{
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
+
+				Assert.AreEqual(200, ctx.Response.StatusCode);
+				Assert.IsTrue(ctx.Response.ContentType.StartsWith(ContentType.Xml));
+
+				Assert.AreEqual("Hello, Bob", ctx.GetResponseBodyAs<HelloResponse>().Result);
 			}
 		}
 	}

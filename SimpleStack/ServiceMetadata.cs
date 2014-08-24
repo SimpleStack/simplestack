@@ -11,15 +11,15 @@ namespace SimpleStack
 {
 	public class ServiceMetadata
 	{
-		public ServiceMetadata ()
+		public ServiceMetadata()
 		{
-			this.RequestTypes = new HashSet<Type> ();
-			this.ServiceTypes = new HashSet<Type> ();
-			this.ResponseTypes = new HashSet<Type> ();
-			this.OperationsMap = new Dictionary<Type, Operation> ();
-			this.OperationsResponseMap = new Dictionary<Type, Operation> ();
-			this.OperationNamesMap = new Dictionary<string, Operation> ();
-			this.Routes = new ServiceRoutes ();
+			RequestTypes = new HashSet<Type>();
+			ServiceTypes = new HashSet<Type>();
+			ResponseTypes = new HashSet<Type>();
+			OperationsMap = new Dictionary<Type, Operation>();
+			OperationsResponseMap = new Dictionary<Type, Operation>();
+			OperationNamesMap = new Dictionary<string, Operation>();
+			Routes = new ServiceRoutes();
 		}
 
 		public Dictionary<Type, Operation> OperationsMap { get; protected set; }
@@ -36,159 +36,166 @@ namespace SimpleStack
 
 		public ServiceRoutes Routes { get; set; }
 
-		public IEnumerable<Operation> Operations {
+		public IEnumerable<Operation> Operations
+		{
 			get { return OperationsMap.Values; }
 		}
 
-		public void Add (Type serviceType, Type requestType, Type responseType)
+		public void Add(Type serviceType, Type requestType, Type responseType)
 		{
-			this.ServiceTypes.Add (serviceType);
-			this.RequestTypes.Add (requestType);
+			ServiceTypes.Add(serviceType);
+			RequestTypes.Add(requestType);
 
-			var restrictTo = requestType.GetCustomAttributes (true)
-					.OfType<RestrictAttribute> ().FirstOrDefault ()
-			                  ?? serviceType.GetCustomAttributes (true)
-					.OfType<RestrictAttribute> ().FirstOrDefault ();
+			var restrictTo = requestType.GetCustomAttributes(true)
+					.OfType<RestrictAttribute>().FirstOrDefault()
+							  ?? serviceType.GetCustomAttributes(true)
+					.OfType<RestrictAttribute>().FirstOrDefault();
 
-			var operation = new Operation {
+			var operation = new Operation
+			{
 				ServiceType = serviceType,
 				RequestType = requestType,
 				ResponseType = responseType,
 				RestrictTo = restrictTo,
-				Actions = GetImplementedActions (serviceType, requestType),
-				Routes = new List<RestPath> (),
+				Actions = GetImplementedActions(serviceType, requestType),
+				Routes = new List<RestPath>(),
 			};
 
-			this.OperationsMap [requestType] = operation;
-			this.OperationNamesMap [requestType.Name.ToLower ()] = operation;
+			OperationsMap[requestType] = operation;
+			OperationNamesMap[requestType.Name.ToLower()] = operation;
 
-			if (responseType != null) {
-				this.ResponseTypes.Add (responseType);
-				this.OperationsResponseMap [responseType] = operation;
+			if (responseType != null)
+			{
+				ResponseTypes.Add(responseType);
+				OperationsResponseMap[responseType] = operation;
 			}
 		}
 
-		public void AfterInit ()
+		public void AfterInit()
 		{
-			foreach (var restPath in Routes.RestPaths) {
+			foreach (var restPath in Routes.RestPaths)
+			{
 				Operation operation;
-				if (!OperationsMap.TryGetValue (restPath.RequestType, out operation))
+				if (!OperationsMap.TryGetValue(restPath.RequestType, out operation))
 					continue;
 
-				operation.Routes.Add (restPath);
+				operation.Routes.Add(restPath);
 			}
 		}
 
-		public List<OperationDto> GetOperationDtos ()
+		public List<OperationDto> GetOperationDtos()
 		{
 			return OperationsMap.Values
-					.SafeConvertAll (x => x.ToOperationDto ())
-					.OrderBy (x => x.Name)
-					.ToList ();
+					.SafeConvertAll(x => x.ToOperationDto())
+					.OrderBy(x => x.Name)
+					.ToList();
 		}
 
-		public Operation GetOperation (Type operationType)
+		public Operation GetOperation(Type operationType)
 		{
 			Operation op;
-			OperationsMap.TryGetValue (operationType, out op);
+			OperationsMap.TryGetValue(operationType, out op);
 			return op;
 		}
 
-		public List<string> GetImplementedActions (Type serviceType, Type requestType)
+		public List<string> GetImplementedActions(Type serviceType, Type requestType)
 		{
-			if (typeof(IService).IsAssignableFrom (serviceType)) {
-				return serviceType.GetActions ()
-						.Where (x => x.GetParameters () [0].ParameterType == requestType)
-						.Select (x => x.Name.ToUpper ())
-						.ToList ();
+			if (typeof(IService).IsAssignableFrom(serviceType))
+			{
+				return serviceType.GetActions()
+						.Where(x => x.GetParameters()[0].ParameterType == requestType)
+						.Select(x => x.Name.ToUpper())
+						.ToList();
 			}
 
 			var oldApiActions = serviceType
-					.GetMethods (BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-					.Select (x => ToNewApiAction (x.Name))
-					.Where (x => x != null)
-					.ToList ();
+					.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+					.Select(x => ToNewApiAction(x.Name))
+					.Where(x => x != null)
+					.ToList();
 			return oldApiActions;
 		}
 
-		public static string ToNewApiAction (string oldApiAction)
+		public static string ToNewApiAction(string oldApiAction)
 		{
-			switch (oldApiAction) {
-			case "Get":
-			case "OnGet":
-				return "GET";
-			case "Put":
-			case "OnPut":
-				return "PUT";
-			case "Post":
-			case "OnPost":
-				return "POST";
-			case "Delete":
-			case "OnDelete":
-				return "DELETE";
-			case "Patch":
-			case "OnPatch":
-				return "PATCH";
-			case "Execute":
-			case "Run":
-				return "ANY";
+			switch (oldApiAction)
+			{
+				case "Get":
+				case "OnGet":
+					return "GET";
+				case "Put":
+				case "OnPut":
+					return "PUT";
+				case "Post":
+				case "OnPost":
+					return "POST";
+				case "Delete":
+				case "OnDelete":
+					return "DELETE";
+				case "Patch":
+				case "OnPatch":
+					return "PATCH";
+				case "Execute":
+				case "Run":
+					return "ANY";
 			}
 			return null;
 		}
 
-		public Type GetOperationType (string operationTypeName)
+		public Type GetOperationType(string operationTypeName)
 		{
 			Operation operation;
-			OperationNamesMap.TryGetValue (operationTypeName.ToLower (), out operation);
+			OperationNamesMap.TryGetValue(operationTypeName.ToLower(), out operation);
 			return operation != null ? operation.RequestType : null;
 		}
 
-		public Type GetServiceTypeByRequest (Type requestType)
+		public Type GetServiceTypeByRequest(Type requestType)
 		{
 			Operation operation;
-			OperationsMap.TryGetValue (requestType, out operation);
+			OperationsMap.TryGetValue(requestType, out operation);
 			return operation != null ? operation.ServiceType : null;
 		}
 
-		public Type GetServiceTypeByResponse (Type responseType)
+		public Type GetServiceTypeByResponse(Type responseType)
 		{
 			Operation operation;
-			OperationsResponseMap.TryGetValue (responseType, out operation);
+			OperationsResponseMap.TryGetValue(responseType, out operation);
 			return operation != null ? operation.ServiceType : null;
 		}
 
-		public Type GetResponseTypeByRequest (Type requestType)
+		public Type GetResponseTypeByRequest(Type requestType)
 		{
 			Operation operation;
-			OperationsMap.TryGetValue (requestType, out operation);
+			OperationsMap.TryGetValue(requestType, out operation);
 			return operation != null ? operation.ResponseType : null;
 		}
 
-		public List<Type> GetAllTypes ()
+		public List<Type> GetAllTypes()
 		{
-			var allTypes = new List<Type> (RequestTypes);
-			foreach (var responseType in ResponseTypes) {
-				allTypes.AddIfNotExists (responseType);
+			var allTypes = new List<Type>(RequestTypes);
+			foreach (var responseType in ResponseTypes)
+			{
+				allTypes.AddIfNotExists(responseType);
 			}
 			return allTypes;
 		}
 
-		public List<string> GetAllOperationNames ()
+		public List<string> GetAllOperationNames()
 		{
-			return Operations.Select (x => x.RequestType.Name).ToList ();
+			return Operations.Select(x => x.RequestType.Name).ToList();
 		}
 
-		public List<string> GetOperationNamesForMetadata (IHttpRequest httpReq)
+		public List<string> GetOperationNamesForMetadata(IHttpRequest httpReq)
 		{
-			return Operations.Select (x => x.RequestType.Name).ToList ();
+			return Operations.Select(x => x.RequestType.Name).ToList();
 		}
 
-		public List<string> GetOperationNamesForMetadata (IHttpRequest httpReq, Format format)
+		public List<string> GetOperationNamesForMetadata(IHttpRequest httpReq, Format format)
 		{
-			return Operations.Select (x => x.RequestType.Name).ToList ();
+			return Operations.Select(x => x.RequestType.Name).ToList();
 		}
 
-		public bool IsVisible (IHttpRequest httpReq, Operation operation)
+		public bool IsVisible(IHttpRequest httpReq, Operation operation)
 		{
 			if (EndpointHost.Config != null && !EndpointHost.Config.EnableAccessRestrictions)
 				return true;
@@ -197,107 +204,108 @@ namespace SimpleStack
 				return true;
 
 			//Less fine-grained on /metadata pages. Only check Network and Format
-			var reqAttrs = httpReq.GetAttributes ();
-			var showToNetwork = CanShowToNetwork (operation, reqAttrs);
+			var reqAttrs = httpReq.GetAttributes();
+			var showToNetwork = CanShowToNetwork(operation, reqAttrs);
 			return showToNetwork;
 		}
 
-		public bool IsVisible (IHttpRequest httpReq, Format format, string operationName)
+		public bool IsVisible(IHttpRequest httpReq, Format format, string operationName)
 		{
 			if (EndpointHost.Config != null && !EndpointHost.Config.EnableAccessRestrictions)
 				return true;
 
 			Operation operation;
-			OperationNamesMap.TryGetValue (operationName.ToLower (), out operation);
+			OperationNamesMap.TryGetValue(operationName.ToLower(), out operation);
 			if (operation == null)
 				return false;
 
-			var canCall = HasImplementation (operation, format);
+			var canCall = HasImplementation(operation, format);
 			if (!canCall)
 				return false;
 
-			var isVisible = IsVisible (httpReq, operation);
+			var isVisible = IsVisible(httpReq, operation);
 			if (!isVisible)
 				return false;
 
 			if (operation.RestrictTo == null)
 				return true;
-			var allowsFormat = operation.RestrictTo.CanShowTo ((EndpointAttributes)(long)format);
+			var allowsFormat = operation.RestrictTo.CanShowTo((EndpointAttributes)(long)format);
 			return allowsFormat;
 		}
 
-		public bool CanAccess (IHttpRequest httpReq, Format format, string operationName)
+		public bool CanAccess(IHttpRequest httpReq, Format format, string operationName)
 		{
-			var reqAttrs = httpReq.GetAttributes ();
-			return CanAccess (reqAttrs, format, operationName);
+			var reqAttrs = httpReq.GetAttributes();
+			return CanAccess(reqAttrs, format, operationName);
 		}
 
-		public bool CanAccess (EndpointAttributes reqAttrs, Format format, string operationName)
+		public bool CanAccess(EndpointAttributes reqAttrs, Format format, string operationName)
 		{
 			if (EndpointHost.Config != null && !EndpointHost.Config.EnableAccessRestrictions)
 				return true;
 
 			Operation operation;
-			OperationNamesMap.TryGetValue (operationName.ToLower (), out operation);
+			OperationNamesMap.TryGetValue(operationName.ToLower(), out operation);
 			if (operation == null)
 				return false;
 
-			var canCall = HasImplementation (operation, format);
+			var canCall = HasImplementation(operation, format);
 			if (!canCall)
 				return false;
 
 			if (operation.RestrictTo == null)
 				return true;
 
-			var allow = operation.RestrictTo.HasAccessTo (reqAttrs);
+			var allow = operation.RestrictTo.HasAccessTo(reqAttrs);
 			if (!allow)
 				return false;
 
-			var allowsFormat = operation.RestrictTo.HasAccessTo ((EndpointAttributes)(long)format);
+			var allowsFormat = operation.RestrictTo.HasAccessTo((EndpointAttributes)(long)format);
 			return allowsFormat;
 		}
 
-		public bool CanAccess (Format format, string operationName)
+		public bool CanAccess(Format format, string operationName)
 		{
 			if (EndpointHost.Config != null && !EndpointHost.Config.EnableAccessRestrictions)
 				return true;
 
 			Operation operation;
-			OperationNamesMap.TryGetValue (operationName.ToLower (), out operation);
+			OperationNamesMap.TryGetValue(operationName.ToLower(), out operation);
 			if (operation == null)
 				return false;
 
-			var canCall = HasImplementation (operation, format);
+			var canCall = HasImplementation(operation, format);
 			if (!canCall)
 				return false;
 
 			if (operation.RestrictTo == null)
 				return true;
 
-			var allowsFormat = operation.RestrictTo.HasAccessTo ((EndpointAttributes)(long)format);
+			var allowsFormat = operation.RestrictTo.HasAccessTo((EndpointAttributes)(long)format);
 			return allowsFormat;
 		}
 
-		public bool HasImplementation (Operation operation, Format format)
+		public bool HasImplementation(Operation operation, Format format)
 		{
-			if (format == Format.Soap11 || format == Format.Soap12) {
+			if (format == Format.Soap11 || format == Format.Soap12)
+			{
 				if (operation.Actions == null)
 					return false;
 
-				return operation.Actions.Contains ("POST")
-				|| operation.Actions.Contains (ActionContext.AnyAction);
+				return operation.Actions.Contains("POST")
+				|| operation.Actions.Contains(ActionContext.AnyAction);
 			}
 			return true;
 		}
 
-		private static bool CanShowToNetwork (Operation operation, EndpointAttributes reqAttrs)
+		private static bool CanShowToNetwork(Operation operation, EndpointAttributes reqAttrs)
 		{
-			if (reqAttrs.IsLocalhost ())
-				return operation.RestrictTo.CanShowTo (EndpointAttributes.Localhost)
-				|| operation.RestrictTo.CanShowTo (EndpointAttributes.LocalSubnet);
+			if (reqAttrs.IsLocalhost())
+				return operation.RestrictTo.CanShowTo(EndpointAttributes.Localhost)
+				|| operation.RestrictTo.CanShowTo(EndpointAttributes.LocalSubnet);
 
-			return operation.RestrictTo.CanShowTo (
-				reqAttrs.IsLocalSubnet ()
+			return operation.RestrictTo.CanShowTo(
+				reqAttrs.IsLocalSubnet()
 					? EndpointAttributes.LocalSubnet
 					: EndpointAttributes.External);
 		}
@@ -346,37 +354,37 @@ namespace SimpleStack
 
 		public bool Flash { get; set; }
 
-		public XsdMetadata (ServiceMetadata metadata, bool flash = false)
+		public XsdMetadata(ServiceMetadata metadata, bool flash = false)
 		{
 			Metadata = metadata;
 			Flash = flash;
 		}
 
-		public List<Type> GetAllTypes ()
+		public List<Type> GetAllTypes()
 		{
-			var allTypes = new List<Type> (Metadata.RequestTypes);
-			allTypes.AddRange (Metadata.ResponseTypes);
+			var allTypes = new List<Type>(Metadata.RequestTypes);
+			allTypes.AddRange(Metadata.ResponseTypes);
 			return allTypes;
 		}
 
-		public List<string> GetReplyOperationNames (Format format)
+		public List<string> GetReplyOperationNames(Format format)
 		{
 			return Metadata.OperationsMap.Values
-					.Where (x => EndpointHost.Config != null
-			&& EndpointHost.Config.MetadataPagesConfig.CanAccess (format, x.Name))
-					.Where (x => !x.IsOneWay)
-					.Select (x => x.RequestType.Name)
-					.ToList ();
+					.Where(x => EndpointHost.Config != null
+			&& EndpointHost.Config.MetadataPagesConfig.CanAccess(format, x.Name))
+					.Where(x => !x.IsOneWay)
+					.Select(x => x.RequestType.Name)
+					.ToList();
 		}
 
-		public List<string> GetOneWayOperationNames (Format format)
+		public List<string> GetOneWayOperationNames(Format format)
 		{
 			return Metadata.OperationsMap.Values
-					.Where (x => EndpointHost.Config != null
-			&& EndpointHost.Config.MetadataPagesConfig.CanAccess (format, x.Name))
-					.Where (x => x.IsOneWay)
-					.Select (x => x.RequestType.Name)
-					.ToList ();
+					.Where(x => EndpointHost.Config != null
+			&& EndpointHost.Config.MetadataPagesConfig.CanAccess(format, x.Name))
+					.Where(x => x.IsOneWay)
+					.Select(x => x.RequestType.Name)
+					.ToList();
 		}
 
 		/// <summary>
@@ -387,53 +395,56 @@ namespace SimpleStack
 		/// </summary>
 		/// <param name="type">The type.</param>
 		/// <returns></returns>
-		public static Type GetBaseTypeWithTheSameName (Type type)
+		public static Type GetBaseTypeWithTheSameName(Type type)
 		{
-			var typesWithSameName = new Stack<Type> ();
+			var typesWithSameName = new Stack<Type>();
 			var baseType = type;
-			do {
+			do
+			{
 				if (baseType.Name == type.Name)
-					typesWithSameName.Push (baseType);
+					typesWithSameName.Push(baseType);
 			} while ((baseType = baseType.BaseType) != null);
 
-			return typesWithSameName.Pop ();
+			return typesWithSameName.Pop();
 		}
 	}
 
 	public static class ServiceMetadataExtensions
 	{
-		public static OperationDto ToOperationDto (this Operation operation)
+		public static OperationDto ToOperationDto(this Operation operation)
 		{
-			var to = new OperationDto {
+			var to = new OperationDto
+			{
 				Name = operation.Name,
 				ResponseName = operation.IsOneWay ? null : operation.ResponseType.Name,
 				ServiceName = operation.ServiceType.Name,
 				Actions = operation.Actions,
-				Routes = operation.Routes.ToDictionary (x => x.Path.PairWith (x.AllowedVerbs)),
+				Routes = operation.Routes.ToDictionary(x => x.Path.PairWith(x.AllowedVerbs)),
 			};
 
-			if (operation.RestrictTo != null) {
-				to.RestrictTo = operation.RestrictTo.AccessibleToAny.ToList ().ConvertAll (x => x.ToString ());
-				to.VisibleTo = operation.RestrictTo.VisibleToAny.ToList ().ConvertAll (x => x.ToString ());
+			if (operation.RestrictTo != null)
+			{
+				to.RestrictTo = operation.RestrictTo.AccessibleToAny.ToList().ConvertAll(x => x.ToString());
+				to.VisibleTo = operation.RestrictTo.VisibleToAny.ToList().ConvertAll(x => x.ToString());
 			}
 
 			return to;
 		}
 
-		public static string GetDescription (this Type operationType)
+		public static string GetDescription(this Type operationType)
 		{
-			var apiAttr = operationType.GetCustomAttributes (typeof(ApiAttribute), true).OfType<ApiAttribute> ().FirstOrDefault ();
+			var apiAttr = operationType.GetCustomAttributes(typeof(ApiAttribute), true).OfType<ApiAttribute>().FirstOrDefault();
 			return apiAttr != null ? apiAttr.Description : "";
 		}
 
-		public static List<ApiMemberAttribute> GetApiMembers (this Type operationType)
+		public static List<ApiMemberAttribute> GetApiMembers(this Type operationType)
 		{
 			var attrs = operationType
-					.GetMembers (BindingFlags.Instance | BindingFlags.Public)
-					.SelectMany (x =>
-						x.GetCustomAttributes (typeof(ApiMemberAttribute), true).OfType<ApiMemberAttribute> ()
-			             )
-					.ToList ();
+					.GetMembers(BindingFlags.Instance | BindingFlags.Public)
+					.SelectMany(x =>
+						x.GetCustomAttributes(typeof(ApiMemberAttribute), true).OfType<ApiMemberAttribute>()
+						 )
+					.ToList();
 
 			return attrs;
 		}

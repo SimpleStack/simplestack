@@ -284,12 +284,13 @@ namespace SimpleStack.Extensions
 		public static int ToStatusCode(this Exception ex)
 		{
 			int errorStatus;
-			if (EndpointHost.Config != null && EndpointHost.Config.MapExceptionToStatusCode.TryGetValue(ex.GetType(), out errorStatus))
+			if (EndpointHost.Config != null && 
+				EndpointHost.Config.MapExceptionToStatusCode.TryGetValue(ex.GetType(), out errorStatus))
 			{
 				return errorStatus;
 			}
 
-			//if (ex is HttpError) return ((HttpError)ex).Status;
+			if (ex is HttpError) return ((HttpError)ex).Status;
 			if (ex is NotImplementedException || ex is NotSupportedException) return (int)HttpStatusCode.MethodNotAllowed;
 			if (ex is ArgumentException || ex is SerializationException) return (int)HttpStatusCode.BadRequest;
 			if (ex is UnauthorizedAccessException) return (int) HttpStatusCode.Forbidden;

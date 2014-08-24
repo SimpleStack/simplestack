@@ -1,18 +1,16 @@
 ﻿using System;
 using SimpleStack.Logging;
-using SimpleStack.Serializers;
 using System.Reflection;
 using System.Collections.Generic;
-using SimpleStack.Interfaces;
 using Funq;
-using SimpleStack.Extensions;
 
 namespace SimpleStack
 {
-	public class ServiceManager
-		: IDisposable
+	public class ServiceManager : IDisposable
 	{
 		private static readonly ILog Log = Logger.CreateLog ();
+
+		private ContainerResolveCache _typeFactory;
 
 		public Container Container { get; private set; }
 		public ServiceController ServiceController { get; private set; }
@@ -28,25 +26,25 @@ namespace SimpleStack
 					"No Assemblies provided in your AppHost's base constructor.\n"
 					+ "To register your services, please provide the assemblies where your web services are defined.");
 
-			this.Container = new Container { DefaultOwner = Owner.External };
-			this.Metadata = new ServiceMetadata();
-			this.ServiceController = new ServiceController(() => GetAssemblyTypes(assembliesWithServices), this.Metadata);
+			Container = new Container { DefaultOwner = Owner.External };
+			Metadata = new ServiceMetadata();
+			ServiceController = new ServiceController(() => GetAssemblyTypes(assembliesWithServices), Metadata);
 		}
 
-		public ServiceManager(bool autoInitialize, params Assembly[] assembliesWithServices)
-			: this(assembliesWithServices)
-		{
-			if (autoInitialize)
-			{
-				this.Init();
-			}
-		}
+		//public ServiceManager(bool autoInitialize, params Assembly[] assembliesWithServices)
+		//	: this(assembliesWithServices)
+		//{
+		//	if (autoInitialize)
+		//	{
+		//		Init();
+		//	}
+		//}
 
-		public ServiceManager(Container container, params Assembly[] assembliesWithServices)
-			: this(assembliesWithServices)
-		{
-			this.Container = container ?? new Container();
-		}
+		//public ServiceManager(Container container, params Assembly[] assembliesWithServices)
+		//	: this(assembliesWithServices)
+		//{
+		//	Container = container ?? new Container();
+		//}
 
 		/// <summary>
 		/// Inject alternative container and strategy for resolving Service Types
@@ -56,12 +54,27 @@ namespace SimpleStack
 			if (serviceController == null)
 				throw new ArgumentNullException("serviceController");
 
-			this.Container = container ?? new Container();
-			this.Metadata = serviceController.Metadata; //always share the same metadata
-			this.ServiceController = serviceController;
+			Container = container ?? new Container();
+			Metadata = serviceController.Metadata; //always share the same metadata
+			ServiceController = serviceController;
 		}
 
-		private List<Type> GetAssemblyTypes(Assembly[] assembliesWithServices)
+		public void Init()
+		{
+			_typeFactory = new ContainerResolveCache(Container);
+
+			ServiceController.Register(_typeFactory);
+
+			Container.RegisterAutoWiredTypes(Metadata.ServiceTypes);
+		}
+
+		public void AfterInit()
+		{
+			ServiceController.AfterInit();
+		}
+
+
+		private static IEnumerable<Type> GetAssemblyTypes(IEnumerable<Assembly> assembliesWithServices)
 		{
 			var results = new List<Type>();
 			string assemblyName = null;
@@ -88,32 +101,21 @@ namespace SimpleStack
 			}
 		}
 
-		private ContainerResolveCache typeFactory;
-
-		public void Init()
-		{
-			typeFactory = new ContainerResolveCache(this.Container);
-
-			this.ServiceController.Register(typeFactory);
-
-			this.Container.RegisterAutoWiredTypes(this.Metadata.ServiceTypes);
-		}
-
-		[Obsolete("Old API")]
-		public void RegisterService<T>()
-		{
+		//[Obsolete("Old API")]
+		//public void RegisterService<T>()
+		//{
 //			if (!typeof(T).IsGenericType
 //				|| typeof(T).GetGenericTypeDefinition() != typeof(IService<>))
 //				throw new ArgumentException("Type {0} is not a Web Service that inherits IService<>".Fmt(typeof(T).FullName));
 //
 //			this.ServiceController.RegisterGService(typeFactory, typeof(T));
 //			this.Container.RegisterAutoWired<T>();
-		}
+		//}
 	
-		[Obsolete("Old API")]
-		public Type RegisterService(Type serviceType)
-		{
-			return null;
+		//[Obsolete("Old API")]
+		//public Type RegisterService(Type serviceType)
+		//{
+		//	return null;
 //			var genericServiceType = serviceType.GetTypeWithGenericTypeDefinitionOf(typeof(IService<>));
 //			try
 //			{
@@ -139,25 +141,22 @@ namespace SimpleStack
 //				Log.Error(ex);
 //				return genericServiceType;
 //			}
-		}
+//		}
 
-		public object Execute(object dto)
-		{
-			return this.ServiceController.Execute(dto, null);
-		}
+		//public object Execute(object dto)
+		//{
+		//	return this.ServiceController.Execute(dto, null);
+		//}
 
 		public void Dispose()
 		{
-			if (this.Container != null)
+			if (Container != null)
 			{
-				this.Container.Dispose();
+				Container.Dispose();
 			}
 		}
 
-		public void AfterInit()
-		{
-			this.ServiceController.AfterInit();
-		}
+
 	}
 
 }

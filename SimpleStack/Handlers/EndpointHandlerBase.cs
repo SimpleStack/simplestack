@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using SimpleStack.Logging;
 using SimpleStack.Extensions;
 using SimpleStack.Interfaces;
@@ -10,7 +9,7 @@ using System.Runtime.Serialization;
 using System.Net;
 using System.ServiceModel;
 
-namespace SimpleStack
+namespace SimpleStack.Handlers
 {
 	public abstract class EndpointHandlerBase : ISimpleStackHttpHandler//, IHttpHandler
 	{
@@ -156,7 +155,7 @@ namespace SimpleStack
 			return EndpointHost.ExecuteService (request, endpointAttributes, httpReq, httpRes);
 		}
 
-		public EndpointAttributes GetEndpointAttributes (System.ServiceModel.OperationContext operationContext)
+		public EndpointAttributes GetEndpointAttributes (OperationContext operationContext)
 		{
 			if (!EndpointHost.Config.EnableAccessRestrictions)
 				return default(EndpointAttributes);
@@ -172,7 +171,7 @@ namespace SimpleStack
 			return portRestrictions;
 		}
 
-		public static IPAddress GetIpAddress (System.ServiceModel.OperationContext context)
+		public static IPAddress GetIpAddress (OperationContext context)
 		{
 			#if !MONO
 			var prop = context.IncomingMessageProperties;

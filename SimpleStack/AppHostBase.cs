@@ -20,7 +20,7 @@ namespace SimpleStack
 	{
 		private static readonly ILog Log = Logger.CreateLog();
 
-		public static AppHostBase Instance { get; protected set; }
+		private bool _initialized = false;
 
 		protected AppHostBase(string serviceName, params Assembly[] assembliesWithServices)
 		{
@@ -59,12 +59,12 @@ namespace SimpleStack
 
 		public void Init()
 		{
-			if (Instance != null)
+			if (_initialized)
 			{
 				throw new InvalidDataException("AppHostBase has already been initiliazed");
 			}
 
-			Instance = this;
+			_initialized = true;
 
 			var serviceManager = EndpointHost.Config.ServiceManager;
 			if (serviceManager != null)
@@ -149,10 +149,11 @@ namespace SimpleStack
 		/// </summary>
 		/// <typeparam name="T">Type to be resolved.</typeparam>
 		/// <returns>Instance of <typeparamref name="T"/>.</returns>
-		public static T Resolve<T>()
+		public T Resolve<T>()
 		{
-			if (Instance == null) throw new InvalidOperationException("AppHostBase is not initialized.");
-			return Instance.Container.Resolve<T>();
+			if (!_initialized) 
+				throw new InvalidOperationException("AppHostBase is not initialized.");
+			return Container.Resolve<T>();
 		}
 
 		/// <summary>
@@ -160,10 +161,12 @@ namespace SimpleStack
 		/// </summary>
 		/// <typeparam name="T">Type to be resolved.</typeparam>
 		/// <returns>Instance of <typeparamref name="T"/>.</returns>
-		public static T ResolveService<T>(IRequestContext httpCtx) where T : class, IRequiresRequestContext
+		public T ResolveService<T>(IRequestContext httpCtx) where T : class, IRequiresRequestContext
 		{
-			if (Instance == null) throw new InvalidOperationException("AppHostBase is not initialized.");
-			var service = Instance.Container.Resolve<T>();
+			if (!_initialized) 
+				throw new InvalidOperationException("AppHostBase is not initialized.");
+
+			var service = Container.Resolve<T>();
 			if (service == null) return null;
 			service.RequestContext = httpCtx;
 			return service;
