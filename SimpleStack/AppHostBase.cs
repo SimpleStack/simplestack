@@ -71,6 +71,7 @@ namespace SimpleStack
 			{
 				serviceManager.Init();
 				Configure(EndpointHost.Config.ServiceManager.Container);
+				serviceManager.AfterInit();
 			}
 			else
 			{

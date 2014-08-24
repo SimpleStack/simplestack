@@ -39,7 +39,6 @@
     <Reference Include="nunit.framework" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConfigTests.cs" />
     <Compile Include="HelloWorld.cs" />
     <Compile Include="MockContext.cs" />
     <Compile Include="MockOwinEnv.cs" />

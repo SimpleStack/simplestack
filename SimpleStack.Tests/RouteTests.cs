@@ -35,6 +35,9 @@ namespace SimpleStack.Tests
 
 			container.Register<ISomeStringInterface>(x => new SomeStringClass());
 
+			Routes
+				.Add<Hello>("/hello-dynamic")
+				.Add<Hello>("/hello-dynamic/{Name}");
 		}
 	}
 
@@ -49,11 +52,18 @@ namespace SimpleStack.Tests
 			_appHost = new TestAppHost();
 			_appHost.Init();
 		}
-		
+
 		[TestFixtureTearDown]
 		public void DisposeAppHost()
 		{
 			_appHost.Dispose();
+			_appHost = null;
+		}
+
+		[TearDown]
+		public void ClearAppHostConfig()
+		{
+			_appHost.Config.SimpleStackHandlerFactoryPath = null;
 		}
 
 		//https://github.com/ServiceStack/ServiceStack/wiki/Routing
@@ -187,6 +197,68 @@ namespace SimpleStack.Tests
 				var response = ctx.GetResponseBodyAs<HelloResponse>();
 
 				Assert.AreEqual(SomeStringClass.TEST_STRING,response.Result);
+			}
+		}
+
+		[Test]
+		[Ignore]
+		public void TestFallbackRoute()
+		{
+			//[FallbackRoute("/{Path}")]
+			Assert.IsFalse(true);
+		}
+
+		[Test]
+		public void TestIgnorePath()
+		{
+			using (var ctx = new MockContext(new MockOwinEnv("GET", "/hello-ignore/this-token-should-be-ignored")))
+			{
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
+
+				Assert.AreEqual(200, ctx.Response.StatusCode);
+
+				var response = ctx.GetResponseBodyAs<HelloResponse>();
+
+				Assert.AreEqual("Hello Has been Ignored !", response.Result);
+			}
+		}
+		[Test]
+		public void TestHelloServiceWithMappingAndBasePath()
+		{
+			_appHost.Config.SimpleStackHandlerFactoryPath = "/api";
+
+			using (var ctx = new MockContext(new MockOwinEnv("GET", "/api/Hello/Bob")))
+			{
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
+
+				Assert.AreEqual(200, ctx.Response.StatusCode);
+
+				Assert.AreEqual("Hello, Bob", ctx.GetResponseBodyAs<HelloResponse>().Result);
+			}
+		}
+
+		[Test]
+		public void TestRouteDynamic()
+		{
+			using (var ctx = new MockContext(new MockOwinEnv("GET", "/hello-dynamic/Bob")))
+			{
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
+
+				Assert.AreEqual(200, ctx.Response.StatusCode);
+
+				var response = ctx.GetResponseBodyAs<HelloResponse>();
+
+				Assert.AreEqual("Hello, Bob", response.Result);
+			}
+			using (var ctx = new MockContext(new MockOwinEnv("GET", "/hello-dynamic")))
+			{
+				Assert.IsTrue(_appHost.ProcessRequest(ctx).Result);
+
+				Assert.AreEqual(200, ctx.Response.StatusCode);
+
+				var response = ctx.GetResponseBodyAs<HelloResponse>();
+
+				Assert.AreEqual("Hello, ", response.Result);
 			}
 		}
 	}

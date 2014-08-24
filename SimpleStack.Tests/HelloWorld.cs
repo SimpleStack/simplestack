@@ -53,6 +53,18 @@ namespace SimpleStack.Tests
 		
 	}
 
+	[Route("/hello-ignore/{ignore}","GET")]
+	public class HelloWithIgnoreAttribtue
+	{
+		
+	}
+
+	[Route("/hello-wildcard/{Name*}")]
+	public class HelloWildcard
+	{
+		public string Name { get; set; }
+	}
+
 	public class HelloResponse
 	{
 		public string Result { get; set; }
@@ -102,6 +114,14 @@ namespace SimpleStack.Tests
 		public HelloResponse Get(HelloUsingSomeStringInterface request)
 		{
 			return new HelloResponse {Result = SomeStringInterface.GetSomeString()};
+		}
+		public HelloResponse Get(HelloWithIgnoreAttribtue request)
+		{
+			return new HelloResponse{Result = "Hello Has been Ignored !"};
+		}
+		public HelloResponse Get(HelloWildcard request)
+		{
+			return new HelloResponse { Result = "Hello, " + request.Name };
 		}
 	}
 }

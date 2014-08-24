@@ -188,7 +188,7 @@ namespace SimpleStack
 			return File.Exists(configPath) ? configPath : null;
 		}
 
-		private static System.Configuration.Configuration GetAppConfig()
+		private static Configuration GetAppConfig()
 		{
 			Assembly entryAssembly;
 

@@ -96,11 +96,6 @@ namespace SimpleStack
 		private static void ApplyConfigChanges()
 		{
 			config.ServiceEndpointsMetadataConfig = ServiceEndpointsMetadataConfig.Create(config.SimpleStackHandlerFactoryPath);
-
-			//TODO: vdaron ignore BCL for now, want to change serialization stuffs
-
-//			JsonDataContractSerializer.Instance.UseBcl = config.UseBclJsonSerializers;
-//			JsonDataContractDeserializer.Instance.UseBcl = config.UseBclJsonSerializers;
 		}
 
 		//After configure called
