@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Web;
+using SimpleStack.Enums;
 using SimpleStack.Interfaces;
 using System.Collections.Generic;
 using System.Configuration;
@@ -199,7 +200,7 @@ namespace SimpleStack.Handlers
 		{
 			if (absoluteUrl == null) return;
 
-			ApplicationBaseUrl = absoluteUrl;
+			ApplicationBaseUrl = EndpointHost.Config.WebHostUrl;
 
 			var defaultRedirectUrl = DefaultHttpHandler as RedirectHttpHandler;
 			if (defaultRedirectUrl != null && defaultRedirectUrl.AbsoluteUrl == null)
@@ -225,8 +226,11 @@ namespace SimpleStack.Handlers
 			//		return reqInfo;
 			//}
 
-			var mode = EndpointHost.Config.ServiceStackHandlerFactoryPath;
+			var mode = EndpointHost.Config.SimpleStackHandlerFactoryPath;
+
 			var pathInfo = httpReq.PathInfo;
+
+
 
 			//Default Request /
 			//if (string.IsNullOrEmpty(pathInfo) || pathInfo == "/")
@@ -310,53 +314,56 @@ namespace SimpleStack.Handlers
 
 		// no handler registered 
 		// serve the file from the filesystem, restricting to a safelist of extensions
-		private static bool ShouldAllow(string filePath)
-		{
-			var fileExt = Path.GetExtension(filePath);
-			if (string.IsNullOrEmpty(fileExt)) return false;
-			return EndpointHost.Config.AllowFileExtensions.Contains(fileExt.Substring(1));
-		}
+		//private static bool ShouldAllow(string filePath)
+		//{
+		//	var fileExt = Path.GetExtension(filePath);
+		//	if (string.IsNullOrEmpty(fileExt)) return false;
+		//	return EndpointHost.Config.AllowFileExtensions.Contains(fileExt.Substring(1));
+		//}
 
 		public static ISimpleStackHttpHandler GetHandlerForPathInfo(string httpMethod, string pathInfo, string requestPath, string filePath)
 		{
 			var pathParts = pathInfo.TrimStart('/').Split('/');
-			if (pathParts.Length == 0) return NotFoundHttpHandler;
+			if (pathParts.Length == 0) 
+				return null;
 
 			var restPath = RestHandler.FindMatchingRestPath(httpMethod, pathInfo);
 			if (restPath != null)
 				return new RestHandler { RestPath = restPath, RequestName = restPath.RequestType.Name };
 
-			var existingFile = pathParts[0].ToLower();
-			if (WebHostRootFileNames.Contains(existingFile))
-			{
-				var fileExt = Path.GetExtension(filePath);
-				var isFileRequest = !string.IsNullOrEmpty(fileExt);
+			return ProcessPredefinedRoutesRequest(httpMethod, pathInfo, filePath);
 
-				if (!isFileRequest && !AutoRedirectsDirs)
-				{
-					//If pathInfo is for Directory try again with redirect including '/' suffix
-					if (!pathInfo.EndsWith("/"))
-					{
-						var appFilePath = filePath.Substring(0, filePath.Length - requestPath.Length);
-						var redirect = Handlers.StaticFileHandler.DirectoryExists(filePath, appFilePath);
-						if (redirect)
-						{
-							return new RedirectHttpHandler
-							{
-								RelativeUrl = pathInfo + "/",
-							};
-						}
-					}
-				}
+			//var existingFile = pathParts[0].ToLower();
+			//if (WebHostRootFileNames.Contains(existingFile))
+			//{
+			//	var fileExt = Path.GetExtension(filePath);
+			//	var isFileRequest = !string.IsNullOrEmpty(fileExt);
 
-				//e.g. CatchAllHandler to Process Markdown files
-				var catchAllHandler = GetCatchAllHandlerIfAny(httpMethod, pathInfo, filePath);
-				if (catchAllHandler != null) return catchAllHandler;
+			//	if (!isFileRequest && !AutoRedirectsDirs)
+			//	{
+			//		//If pathInfo is for Directory try again with redirect including '/' suffix
+			//		if (!pathInfo.EndsWith("/"))
+			//		{
+			//			var appFilePath = filePath.Substring(0, filePath.Length - requestPath.Length);
+			//			var redirect = Handlers.StaticFileHandler.DirectoryExists(filePath, appFilePath);
+			//			if (redirect)
+			//			{
+			//				return new RedirectHttpHandler
+			//				{
+			//					RelativeUrl = pathInfo + "/",
+			//				};
+			//			}
+			//		}
+			//	}
 
-				if (!isFileRequest) return NotFoundHttpHandler;
+			//	//e.g. CatchAllHandler to Process Markdown files
+			//	var catchAllHandler = GetCatchAllHandlerIfAny(httpMethod, pathInfo, filePath);
+			//	if (catchAllHandler != null) return catchAllHandler;
 
-				return ShouldAllow(requestPath) ? StaticFileHandler : ForbiddenHttpHandler;
-			}
+			//	if (!isFileRequest) return NotFoundHttpHandler;
+
+			//	return ShouldAllow(requestPath) ? StaticFileHandler : ForbiddenHttpHandler;
+			//}
 
 			return GetCatchAllHandlerIfAny(httpMethod, pathInfo, filePath);
 		}
@@ -375,6 +382,50 @@ namespace SimpleStack.Handlers
 
 			return null;
 		}
+		private static ISimpleStackHttpHandler ProcessPredefinedRoutesRequest(string httpMethod, string pathInfo, string filePath)
+		{
+			var pathParts = pathInfo.TrimStart('/').Split('/');
+			if (pathParts.Length == 0)
+				return null;
+
+			if (pathParts.Length == 1)
+			{
+				//TODO: vdaron enable soap ??
+				//if (pathController == "soap11")
+				//	return new Soap11MessageSyncReplyHttpHandler();
+				//if (pathController == "soap12")
+				//	return new Soap12MessageSyncReplyHttpHandler();
+
+				return null;
+			}
+
+			var pathController = string.Intern(pathParts[0].ToLower());
+
+			var pathAction = string.Intern(pathParts[1].ToLower());
+			var requestName = pathParts.Length > 2 ? pathParts[2] : null;
+			var isReply = pathAction == "syncreply" || pathAction == "reply";
+			var isOneWay = pathAction == "asynconeway" || pathAction == "oneway";
+
+			List<string> contentTypes;
+			if (EndpointHost.ContentTypeFilter.ContentTypeFormats.TryGetValue(pathController, out contentTypes))
+			{
+				var contentType = contentTypes[0];
+
+				if (isReply)
+					return new GenericHandler(contentType, EndpointAttributes.Reply)
+					{
+						RequestName = requestName
+					};
+				if (isOneWay)
+					return new GenericHandler(contentType, EndpointAttributes.OneWay)
+					{
+						RequestName = requestName
+					};
+			}
+
+			return null;
+		}
+
 	}
 }
 

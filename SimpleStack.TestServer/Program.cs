@@ -31,6 +31,8 @@ namespace SimpleStack.TestServer
 				SwaggerApiService.UseCamelCaseModelPropertyNames = true;
 				SwaggerApiService.UseLowercaseUnderscoreModelPropertyNames = true;
 				SwaggerApiService.DisableAutoDtoInBodyParam = false;
+
+				base.Config.SimpleStackHandlerFactoryPath = "/api";
 			}
 
 			public override void Configure(Funq.Container container)

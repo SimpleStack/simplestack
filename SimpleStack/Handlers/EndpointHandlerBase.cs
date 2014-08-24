@@ -148,7 +148,10 @@ namespace SimpleStack
 						: EndpointHost.Metadata.GetOperationType (operationName);
 		}
 
-		protected static object ExecuteService (object request, EndpointAttributes endpointAttributes, IHttpRequest httpReq, IHttpResponse httpRes)
+		protected static object ExecuteService (object request, 
+			EndpointAttributes endpointAttributes, 
+			IHttpRequest httpReq, 
+			IHttpResponse httpRes)
 		{
 			return EndpointHost.ExecuteService (request, endpointAttributes, httpReq, httpRes);
 		}

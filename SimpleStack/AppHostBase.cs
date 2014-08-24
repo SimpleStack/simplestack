@@ -345,6 +345,9 @@ namespace SimpleStack
 			var httpReq = new OwinRequestWrapper(operationName, context.Request);
 			var httpRes = new OwinResponseWrapper(context.Response);
 
+			if (httpReq.PathInfo == null)
+				return false;
+
 			var simpleStackHttpHandler = SimpleStackHttpHandlerFactory.GetHandler(httpReq);
 			if (simpleStackHttpHandler != null)
 			{
@@ -360,7 +363,6 @@ namespace SimpleStack
 
 			return false;
 
-
 			//throw new NotImplementedException("Cannot execute handler: " + simpleStackHttpHandler + " at PathInfo: " + httpReq.PathInfo);
 		}
 
@@ -372,7 +374,7 @@ namespace SimpleStack
 
 			if (pathParts.Length == 1)
 			{
-				//TODO: vdaron enable soap
+				//TODO: vdaron enable soap ??
 				//if (pathController == "soap11")
 				//	return new Soap11MessageSyncReplyHttpHandler();
 				//if (pathController == "soap12")

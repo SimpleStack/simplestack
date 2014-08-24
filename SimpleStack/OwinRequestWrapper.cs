@@ -153,7 +153,24 @@ namespace SimpleStack
 		{
 			get
 			{
-				return request.Path.HasValue? request.Path.Value : String.Empty;
+				if (String.IsNullOrEmpty(pathInfo))
+				{
+					pathInfo = request.Path.HasValue? request.Path.Value : String.Empty;
+
+					if (!String.IsNullOrEmpty(EndpointHostConfig.Instance.SimpleStackHandlerFactoryPath))
+					{
+						if (pathInfo.StartsWith(EndpointHostConfig.Instance.SimpleStackHandlerFactoryPath))
+						{
+							pathInfo = pathInfo.Substring(EndpointHostConfig.Instance.SimpleStackHandlerFactoryPath.Length);
+						}
+						else
+						{
+							//The request is not under the AbsolutePath
+							return null;
+						}
+					}
+				}
+				return pathInfo;
 			}
 		}
 

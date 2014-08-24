@@ -39,10 +39,11 @@
     <Reference Include="nunit.framework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigTests.cs" />
     <Compile Include="HelloWorld.cs" />
     <Compile Include="MockContext.cs" />
     <Compile Include="MockOwinEnv.cs" />
-    <Compile Include="Test.cs" />
+    <Compile Include="RouteTests.cs" />
     <Compile Include="TestStream.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

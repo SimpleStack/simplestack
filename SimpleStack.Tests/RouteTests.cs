@@ -39,7 +39,7 @@ namespace SimpleStack.Tests
 	}
 
 	[TestFixture]
-	public class Test
+	public class RoutesTests
 	{
 		private TestAppHost _appHost;
 
@@ -49,11 +49,14 @@ namespace SimpleStack.Tests
 			_appHost = new TestAppHost();
 			_appHost.Init();
 		}
-
+		
+		[TestFixtureTearDown]
 		public void DisposeAppHost()
 		{
 			_appHost.Dispose();
 		}
+
+		//https://github.com/ServiceStack/ServiceStack/wiki/Routing
 
 		[Test]
 		public void TestHelloServiceQueryString()
@@ -186,9 +189,6 @@ namespace SimpleStack.Tests
 				Assert.AreEqual(SomeStringClass.TEST_STRING,response.Result);
 			}
 		}
-
-		
-
 	}
 }
 

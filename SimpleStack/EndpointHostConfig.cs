@@ -38,10 +38,9 @@ namespace SimpleStack
 				if (instance == null)
 				{
 					instance = new EndpointHostConfig {
-						MetadataTypesConfig = new MetadataTypesConfig(
-							addDefaultXmlNamespace: "http://schemas.servicestack.net/types"),
-						WsdlServiceNamespace = "http://schemas.servicestack.net/types",
-						WsdlSoapActionNamespace = "http://schemas.servicestack.net/types",
+						MetadataTypesConfig = new MetadataTypesConfig(addDefaultXmlNamespace: "http://schemas.simplestack.org/types"),
+						WsdlServiceNamespace = "http://schemas.simplestack.org/types",
+						WsdlSoapActionNamespace = "http://schemas.simplestack.org/types",
 						MetadataPageBodyHtml = @"<br />
                             <h3><a href=""https://github.com/ServiceStack/ServiceStack/wiki/Clients-overview"">Clients Overview</a></h3>",
 						MetadataOperationPageBodyHtml = @"<br />
@@ -49,7 +48,7 @@ namespace SimpleStack
 //						LogFactory = null,// new NullLogFactory(),
 						EnableAccessRestrictions = true,
 						WebHostPhysicalPath = "~".MapServerPath(),
-						ServiceStackHandlerFactoryPath = ServiceStackPath,
+						SimpleStackHandlerFactoryPath = ServiceStackPath,
 						MetadataRedirectPath = null,
 						DefaultContentType = null,
 						AllowJsonpRequests = true,
@@ -68,13 +67,13 @@ namespace SimpleStack
 						},
 						GlobalResponseHeaders = new Dictionary<string, string> { { "X-Powered-By", Env.ServerUserAgent } },
 						IgnoreFormatsInMetadata = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase),
-						AllowFileExtensions = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
-						{
-							"js", "css", "htm", "html", "shtm", "txt", "xml", "rss", "csv", 
-							"jpg", "jpeg", "gif", "png", "bmp", "ico", "tif", "tiff", "svg", 
-							"avi", "divx", "m3u", "mov", "mp3", "mpeg", "mpg", "qt", "vob", "wav", "wma", "wmv", 
-							"flv", "xap", "xaml", "ogg", "mp4", "webm", 
-						},
+						//AllowFileExtensions = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+						//{
+						//	"js", "css", "htm", "html", "shtm", "txt", "xml", "rss", "csv", 
+						//	"jpg", "jpeg", "gif", "png", "bmp", "ico", "tif", "tiff", "svg", 
+						//	"avi", "divx", "m3u", "mov", "mp3", "mpeg", "mpg", "qt", "vob", "wav", "wma", "wmv", 
+						//	"flv", "xap", "xaml", "ogg", "mp4", "webm", 
+						//},
 						DebugAspNetHostEnvironment = Env.IsMono ? "FastCGI" : "IIS7",
 						DebugHttpListenerHostEnvironment = Env.IsMono ? "XSP" : "WebServer20",
 						EnableFeatures = Feature.All,
@@ -107,7 +106,7 @@ namespace SimpleStack
 						AllowPartialResponses = true,
 					};
 
-					if (instance.ServiceStackHandlerFactoryPath == null)
+					if (instance.SimpleStackHandlerFactoryPath == null)
 					{
 						InferHttpHandlerPath();
 					}
@@ -141,14 +140,14 @@ namespace SimpleStack
 			this.WebHostPhysicalPath = instance.WebHostPhysicalPath;
 			this.DefaultRedirectPath = instance.DefaultRedirectPath;
 			this.MetadataRedirectPath = instance.MetadataRedirectPath;
-			this.ServiceStackHandlerFactoryPath = instance.ServiceStackHandlerFactoryPath;
+			this.SimpleStackHandlerFactoryPath = instance.SimpleStackHandlerFactoryPath;
 			this.DefaultContentType = instance.DefaultContentType;
 			this.AllowJsonpRequests = instance.AllowJsonpRequests;
 			this.DebugMode = instance.DebugMode;
 			this.DefaultDocuments = instance.DefaultDocuments;
 			this.GlobalResponseHeaders = instance.GlobalResponseHeaders;
 			this.IgnoreFormatsInMetadata = instance.IgnoreFormatsInMetadata;
-			this.AllowFileExtensions = instance.AllowFileExtensions;
+			//this.AllowFileExtensions = instance.AllowFileExtensions;
 			this.EnableFeatures = instance.EnableFeatures;
 			this.WriteErrorsToResponse = instance.WriteErrorsToResponse;
 			this.ReturnsInnerException = instance.ReturnsInnerException;
@@ -226,7 +225,7 @@ namespace SimpleStack
 				{
 					throw new ConfigurationErrorsException(
 						"Unable to infer ServiceStack's <httpHandler.Path/> from the Web.Config\n"
-						+ "Check with http://www.servicestack.net/ServiceStack.Hello/ to ensure you have configured ServiceStack properly.\n"
+						+ "Check with http://www.simplestack.org/ServiceStack.Hello/ to ensure you have configured ServiceStack properly.\n"
 						+ "Otherwise you can explicitly set your httpHandler.Path by setting: EndpointHostConfig.ServiceStackPath");
 				}
 			}
@@ -289,12 +288,10 @@ namespace SimpleStack
 				handlerPath = handlerPath.Replace("*", String.Empty);
 			}
 
-			instance.ServiceStackHandlerFactoryPath = locationPath ??
-				(string.IsNullOrEmpty(handlerPath) ? null : handlerPath);
+			instance.SimpleStackHandlerFactoryPath = locationPath ?? (string.IsNullOrEmpty(handlerPath) ? null : handlerPath);
 
 			instance.MetadataRedirectPath = PathUtils.CombinePaths(
-				null != locationPath ? instance.ServiceStackHandlerFactoryPath : handlerPath
-				, "metadata");
+				null != locationPath ? instance.SimpleStackHandlerFactoryPath : handlerPath, "metadata");
 		}
 
 		private static string ExtractHandlerPathFromWebServerConfigurationXml(string rawXml)
@@ -347,7 +344,7 @@ namespace SimpleStack
 
 		public string WebHostUrl { get; set; }
 		public string WebHostPhysicalPath { get; set; }
-		public string ServiceStackHandlerFactoryPath { get; set; }
+		public string SimpleStackHandlerFactoryPath { get; set; }
 		public string DefaultRedirectPath { get; set; }
 		public string MetadataRedirectPath { get; set; }
 

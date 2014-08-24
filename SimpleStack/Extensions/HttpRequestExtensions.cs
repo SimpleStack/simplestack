@@ -172,7 +172,7 @@ namespace SimpleStack.Extensions
 			var url = new Uri(httpReq.AbsoluteUri);
 			var baseUrl = url.Scheme + "://" + url.Host;
 			if (url.Port != 80) baseUrl += ":" + url.Port;
-			var appUrl = baseUrl.CombineWith(EndpointHost.Config.ServiceStackHandlerFactoryPath);
+			var appUrl = baseUrl.CombineWith(EndpointHost.Config.SimpleStackHandlerFactoryPath);
 			return appUrl;
 		}
 

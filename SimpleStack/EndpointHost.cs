@@ -95,7 +95,7 @@ namespace SimpleStack
 		// Config has changed
 		private static void ApplyConfigChanges()
 		{
-			config.ServiceEndpointsMetadataConfig = ServiceEndpointsMetadataConfig.Create(config.ServiceStackHandlerFactoryPath);
+			config.ServiceEndpointsMetadataConfig = ServiceEndpointsMetadataConfig.Create(config.SimpleStackHandlerFactoryPath);
 
 			//TODO: vdaron ignore BCL for now, want to change serialization stuffs
 
@@ -167,8 +167,8 @@ namespace SimpleStack
 				};
 			}
 
-			if (config.ServiceStackHandlerFactoryPath != null)
-				config.ServiceStackHandlerFactoryPath = config.ServiceStackHandlerFactoryPath.TrimStart('/');
+			//if (config.SimpleStackHandlerFactoryPath != null)
+			//	config.SimpleStackHandlerFactoryPath = config.SimpleStackHandlerFactoryPath.TrimStart('/');
 
 			var specifiedContentType = config.DefaultContentType; //Before plugins loaded
 

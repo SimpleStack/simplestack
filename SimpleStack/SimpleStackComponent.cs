@@ -26,9 +26,7 @@ namespace SimpleStack
 		{
 			Microsoft.Owin.OwinContext ctx = new Microsoft.Owin.OwinContext(environment);
 
-			await _appHost.ProcessRequest(ctx);
-
-			if (_next != null)
+			if (!await _appHost.ProcessRequest(ctx))
 			{
 				await _next.Invoke(environment);
 			}
