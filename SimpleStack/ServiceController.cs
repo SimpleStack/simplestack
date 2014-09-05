@@ -220,13 +220,14 @@ namespace SimpleStack
 			var yieldedHashMatches = RestPath.GetFirstMatchHashKeys(matchUsingPathParts);
 			foreach (var potentialHashMatch in yieldedHashMatches)
 			{
-				if (!this.RestPathMap.TryGetValue(potentialHashMatch, out firstMatches)) continue;
+				if (!RestPathMap.TryGetValue(potentialHashMatch, out firstMatches)) continue;
 
 				var bestScore = -1;
 				foreach (var restPath in firstMatches)
 				{
 					var score = restPath.MatchScore(httpMethod, matchUsingPathParts);
-					if (score > bestScore) bestScore = score;
+					if (score > bestScore) 
+						bestScore = score;
 				}
 				if (bestScore > 0)
 				{

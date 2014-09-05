@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using SimpleStack.Interfaces;
 using System.Net;
 using System.Collections.Generic;
@@ -197,13 +198,14 @@ namespace SimpleStack.Extensions
 			return httpMethod;
 		}
 
-		public static string GetFormatModifier(this IHttpRequest httpReq)
-		{
-			var format = httpReq.QueryString["format"];
-			if (format == null) return null;
-			var parts = format.SplitOnFirst('.');
-			return parts.Length > 1 ? parts[1] : null;
-		}
+		//public static string GetFormatModifier(this IHttpRequest httpReq)
+		//{
+		//	var format = httpReq.QueryString["format"];
+		//	if (format == null) 
+		//		return null;
+		//	var parts = format.SplitOnFirst('.');
+		//	return parts.Length > 1 ? parts[1] : null;
+		//}
 
 		public static bool HasNotModifiedSince(this IHttpRequest httpReq, DateTime? dateTime)
 		{
@@ -365,12 +367,10 @@ namespace SimpleStack.Extensions
 				if (pi[0] == '/')
 					pi = pi.Substring(1);
 
-				format = pi.SplitOnFirst('/')[0];
-				if (format.Length > formatMaxLength)
-					return null;
+				format = pi.SplitOnFirst('/').Last();
 			}
 
-			format = format.SplitOnFirst('.')[0].ToLower();
+			format = format.SplitOnFirst('.').Last().ToLower();
 			if (format.Contains("json"))
 				return ContentType.Json;
 			if (format.Contains("xml"))

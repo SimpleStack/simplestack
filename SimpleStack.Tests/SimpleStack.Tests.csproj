@@ -42,6 +42,7 @@
     <Compile Include="HelloWorld.cs" />
     <Compile Include="MockContext.cs" />
     <Compile Include="MockOwinEnv.cs" />
+    <Compile Include="RestPathTests.cs" />
     <Compile Include="RouteTests.cs" />
     <Compile Include="TestStream.cs" />
   </ItemGroup>

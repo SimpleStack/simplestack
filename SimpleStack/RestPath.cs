@@ -48,7 +48,7 @@ namespace SimpleStack
 			allowsAllVerbs = verbs == null || verbs == WildCard;
 			if (!allowsAllVerbs)
 			{
-				allowedVerbs = verbs.ToUpper();
+				allowedVerbs = verbs.ToLower();
 			}
 
 			var componentsList = new List<string>();
@@ -289,7 +289,7 @@ namespace SimpleStack
 
 		public int MatchScore(string httpMethod, string[] withPathInfoParts)
 		{
-			bool isMatch = IsMatch(httpMethod, withPathInfoParts);
+			bool isMatch = IsMatch(httpMethod.ToLower(), withPathInfoParts);
 			if (!isMatch) return -1;
 
 			bool exactVerb = httpMethod == AllowedVerbs;
@@ -308,18 +308,24 @@ namespace SimpleStack
 		/// <returns></returns>
 		public bool IsMatch(string httpMethod, string[] withPathInfoParts)
 		{
-			if (withPathInfoParts.Length != PathComponentsCount && !isWildCardPath) return false;
-			if (!allowsAllVerbs && !allowedVerbs.Contains(httpMethod)) return false;
+			if (withPathInfoParts.Length != PathComponentsCount && !isWildCardPath) 
+				return false;
+			if (!allowsAllVerbs && !allowedVerbs.Contains(httpMethod)) 
+				return false;
 
-			if (!ExplodeComponents(ref withPathInfoParts)) return false;
-			if (TotalComponentsCount != withPathInfoParts.Length && !isWildCardPath) return false;
+			if (!ExplodeComponents(ref withPathInfoParts)) 
+				return false;
+			if (TotalComponentsCount != withPathInfoParts.Length && !isWildCardPath) 
+				return false;
 
 			for (int i = 0; i < TotalComponentsCount; i++)
 			{
 				string literalToMatch = literalsToMatch[i];
-				if (literalToMatch == null) continue;
+				if (literalToMatch == null) 
+					continue;
 
-				if (withPathInfoParts[i] != literalToMatch) return false;
+				if (withPathInfoParts[i] != literalToMatch) 
+					return false;
 			}
 
 			return true;
