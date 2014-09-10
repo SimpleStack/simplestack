@@ -13,10 +13,10 @@ namespace SimpleStack.Tests
 
 	public class PafException : Exception
 	{
-		public const string Message = "Paf";
+		public const string PafMessage = "Paf";
 
 		public PafException()
-			: base(Message)
+			: base(PafMessage)
 		{
 
 		}

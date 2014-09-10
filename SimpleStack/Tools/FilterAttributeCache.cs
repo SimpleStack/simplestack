@@ -7,10 +7,10 @@ namespace SimpleStack.Tools
 {
 	public static class FilterAttributeCache
 	{
-		private static Dictionary<Type, IHasRequestFilter[]> requestFilterAttributes
+		private static Dictionary<Type, IHasRequestFilter[]> _requestFilterAttributes
 		= new Dictionary<Type, IHasRequestFilter[]>();
 
-		private static Dictionary<Type, IHasResponseFilter[]> responseFilterAttributes
+		private static Dictionary<Type, IHasResponseFilter[]> _responseFilterAttributes
 		= new Dictionary<Type, IHasResponseFilter[]>();
 
 		private static IHasRequestFilter[] ShallowCopy(this IHasRequestFilter[] filters)
@@ -36,7 +36,7 @@ namespace SimpleStack.Tools
 		public static IHasRequestFilter[] GetRequestFilterAttributes(Type requestDtoType)
 		{
 			IHasRequestFilter[] attrs;
-			if (requestFilterAttributes.TryGetValue(requestDtoType, out attrs)) return attrs.ShallowCopy();
+			if (_requestFilterAttributes.TryGetValue(requestDtoType, out attrs)) return attrs.ShallowCopy();
 
 			var attributes = new List<IHasRequestFilter>(
 				(IHasRequestFilter[])requestDtoType.GetCustomAttributes(typeof(IHasRequestFilter), true));
@@ -51,12 +51,12 @@ namespace SimpleStack.Tools
 			Dictionary<Type, IHasRequestFilter[]> snapshot, newCache;
 			do
 			{
-				snapshot = requestFilterAttributes;
-				newCache = new Dictionary<Type, IHasRequestFilter[]>(requestFilterAttributes);
+				snapshot = _requestFilterAttributes;
+				newCache = new Dictionary<Type, IHasRequestFilter[]>(_requestFilterAttributes);
 				newCache[requestDtoType] = attrs;
 
 			} while (!ReferenceEquals(
-				Interlocked.CompareExchange(ref requestFilterAttributes, newCache, snapshot), snapshot));
+				Interlocked.CompareExchange(ref _requestFilterAttributes, newCache, snapshot), snapshot));
 
 			return attrs.ShallowCopy();
 		}
@@ -64,7 +64,7 @@ namespace SimpleStack.Tools
 		public static IHasResponseFilter[] GetResponseFilterAttributes(Type responseDtoType)
 		{
 			IHasResponseFilter[] attrs;
-			if (responseFilterAttributes.TryGetValue(responseDtoType, out attrs)) return attrs.ShallowCopy();
+			if (_responseFilterAttributes.TryGetValue(responseDtoType, out attrs)) return attrs.ShallowCopy();
 
 			var attributes = new List<IHasResponseFilter>(
 				(IHasResponseFilter[])responseDtoType.GetCustomAttributes(typeof(IHasResponseFilter), true));
@@ -82,12 +82,12 @@ namespace SimpleStack.Tools
 			Dictionary<Type, IHasResponseFilter[]> snapshot, newCache;
 			do
 			{
-				snapshot = responseFilterAttributes;
-				newCache = new Dictionary<Type, IHasResponseFilter[]>(responseFilterAttributes);
+				snapshot = _responseFilterAttributes;
+				newCache = new Dictionary<Type, IHasResponseFilter[]>(_responseFilterAttributes);
 				newCache[responseDtoType] = attrs;
 
 			} while (!ReferenceEquals(
-				Interlocked.CompareExchange(ref responseFilterAttributes, newCache, snapshot), snapshot));
+				Interlocked.CompareExchange(ref _responseFilterAttributes, newCache, snapshot), snapshot));
 
 			return attrs.ShallowCopy();
 		}

@@ -26,34 +26,29 @@ namespace SimpleStack
 
 		public ServiceRunner(IAppHost appHost, ActionContext actionContext)
 		{
-			this.AppHost = appHost;
-			this.ServiceAction = actionContext.ServiceAction;
-			this.RequestFilters = actionContext.RequestFilters;
-			this.ResponseFilters = actionContext.ResponseFilters;
+			AppHost = appHost;
+			ServiceAction = actionContext.ServiceAction;
+			RequestFilters = actionContext.RequestFilters;
+			ResponseFilters = actionContext.ResponseFilters;
 		}
 
-		public IAppHost GetAppHost()
-		{
-			return AppHost ?? EndpointHost.AppHost;
-		}
+		//public T TryResolve<T>()
+		//{
+		//	return this.GetAppHost() == null
+		//		? default(T)
+		//		: this.GetAppHost().TryResolve<T>();
+		//}
 
-		public T TryResolve<T>()
-		{
-			return this.GetAppHost() == null
-				? default(T)
-				: this.GetAppHost().TryResolve<T>();
-		}
-
-		public T ResolveService<T>(IRequestContext requestContext)
-		{
-			var service = this.GetAppHost().TryResolve<T>();
-			var requiresContext = service as IRequiresRequestContext;
-			if (requiresContext != null)
-			{
-				requiresContext.RequestContext = requestContext;
-			}
-			return service;
-		}
+		//public T ResolveService<T>(IRequestContext requestContext)
+		//{
+		//	var service = this.GetAppHost().TryResolve<T>();
+		//	var requiresContext = service as IRequiresRequestContext;
+		//	if (requiresContext != null)
+		//	{
+		//		requiresContext.RequestContext = requestContext;
+		//	}
+		//	return service;
+		//}
 
 		public virtual void BeforeEachRequest(IRequestContext requestContext, TRequest request)
 		{
@@ -99,8 +94,7 @@ namespace SimpleStack
 			{
 				BeforeEachRequest(requestContext, request);
 
-				var appHost = GetAppHost();
-				var container = appHost != null ? appHost.Config.ServiceManager.Container : null;
+				var container = AppHost.Config.ServiceManager.Container;
 				var httpReq = requestContext != null ? requestContext.Get<IHttpRequest>() : null;
 				var httpRes = requestContext != null ? requestContext.Get<IHttpResponse>() : null;
 
@@ -109,12 +103,15 @@ namespace SimpleStack
 					foreach (var requestFilter in RequestFilters)
 					{
 						var attrInstance = requestFilter.Copy();
+						
 						if (container != null)
 							container.AutoWire(attrInstance);
+						
 						attrInstance.RequestFilter(httpReq, httpRes, request);
-						if (appHost != null)
-							appHost.Release(attrInstance);
-						if (httpRes != null && httpRes.IsClosed) return null;
+						AppHost.Release(attrInstance);
+
+						if (httpRes != null && httpRes.IsClosed) 
+							return null;
 					}
 				}
 
@@ -127,10 +124,13 @@ namespace SimpleStack
 						var attrInstance = responseFilter.Copy();
 						if (container != null)
 							container.AutoWire(attrInstance);
+
 						attrInstance.ResponseFilter(httpReq, httpRes, response);
-						if (appHost != null)
-							appHost.Release(attrInstance);
-						if (httpRes != null && httpRes.IsClosed) return null;
+						
+						AppHost.Release(attrInstance);
+						
+						if (httpRes != null && httpRes.IsClosed) 
+							return null;
 					}
 				}
 
@@ -153,7 +153,7 @@ namespace SimpleStack
 
 		public virtual object HandleException(IRequestContext requestContext, TRequest request, Exception ex)
 		{
-			var useAppHost = GetAppHost();
+			var useAppHost = AppHost;
 
 			object errorResponse = null;
 

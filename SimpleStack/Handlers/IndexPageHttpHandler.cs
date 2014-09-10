@@ -4,62 +4,62 @@ using System.Net;
 
 namespace SimpleStack.Handlers
 {
-	public class IndexPageHttpHandler
-		: ISimpleStackHttpHandler//, IHttpHandler
-	{
+//	public class IndexPageHttpHandler
+//		: ISimpleStackHttpHandler//, IHttpHandler
+//	{
 
-		/// <summary>
-		/// Non ASP.NET requests
-		/// </summary>
-		/// <param name="request"></param>
-		/// <param name="response"></param>
-		/// <param name="operationName"></param>
-		public void ProcessRequest(IHttpRequest request, IHttpResponse response, string operationName)
-		{
-			var defaultUrl = EndpointHost.Config.ServiceEndpointsMetadataConfig.DefaultMetadataUri;
-
-			if (request.PathInfo == "/")
-			{
-				var relativeUrl = defaultUrl.Substring(defaultUrl.IndexOf('/'));
-				var absoluteUrl = request.RawUrl.TrimEnd('/') + relativeUrl;
-				response.StatusCode = (int) HttpStatusCode.Redirect;
-				response.AddHeader(HttpHeaders.Location, absoluteUrl);
-			}
-			else
-			{
-				response.StatusCode = (int)HttpStatusCode.Redirect;
-				response.AddHeader(HttpHeaders.Location, defaultUrl);
-			}
-		}
-
-		/// <summary>
-		/// ASP.NET requests
-		/// </summary>
-		/// <param name="context"></param>
-//		public void ProcessRequest(HttpContext context)
+//		/// <summary>
+//		/// Non ASP.NET requests
+//		/// </summary>
+//		/// <param name="request"></param>
+//		/// <param name="response"></param>
+//		/// <param name="operationName"></param>
+//		public void ProcessRequest(IHttpRequest request, IHttpResponse response, string operationName)
 //		{
 //			var defaultUrl = EndpointHost.Config.ServiceEndpointsMetadataConfig.DefaultMetadataUri;
-//
-//			if (context.Request.PathInfo == "/"
-//				|| context.Request.FilePath.EndsWith("/"))
+
+//			if (request.PathInfo == "/")
 //			{
-//				//new NotFoundHttpHandler().ProcessRequest(context); return;
-//
 //				var relativeUrl = defaultUrl.Substring(defaultUrl.IndexOf('/'));
-//				var absoluteUrl = context.Request.Url.AbsoluteUri.TrimEnd('/') + relativeUrl;
-//				context.Response.Redirect(absoluteUrl);
+//				var absoluteUrl = request.RawUrl.TrimEnd('/') + relativeUrl;
+//				response.StatusCode = (int) HttpStatusCode.Redirect;
+//				response.AddHeader(HttpHeaders.Location, absoluteUrl);
 //			}
 //			else
 //			{
-//				context.Response.Redirect(defaultUrl);
+//				response.StatusCode = (int)HttpStatusCode.Redirect;
+//				response.AddHeader(HttpHeaders.Location, defaultUrl);
 //			}
-//
 //		}
 
-		public bool IsReusable
-		{
-			get { return true; }
-		}
-	}
+//		/// <summary>
+//		/// ASP.NET requests
+//		/// </summary>
+//		/// <param name="context"></param>
+////		public void ProcessRequest(HttpContext context)
+////		{
+////			var defaultUrl = EndpointHost.Config.ServiceEndpointsMetadataConfig.DefaultMetadataUri;
+////
+////			if (context.Request.PathInfo == "/"
+////				|| context.Request.FilePath.EndsWith("/"))
+////			{
+////				//new NotFoundHttpHandler().ProcessRequest(context); return;
+////
+////				var relativeUrl = defaultUrl.Substring(defaultUrl.IndexOf('/'));
+////				var absoluteUrl = context.Request.Url.AbsoluteUri.TrimEnd('/') + relativeUrl;
+////				context.Response.Redirect(absoluteUrl);
+////			}
+////			else
+////			{
+////				context.Response.Redirect(defaultUrl);
+////			}
+////
+////		}
+
+//		public bool IsReusable
+//		{
+//			get { return true; }
+//		}
+//	}
 }
 

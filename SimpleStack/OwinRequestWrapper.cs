@@ -29,7 +29,6 @@ namespace SimpleStack
 
 		private static readonly string physicalFilePath;
 		private readonly IOwinRequest request;
-		public Container Container { get; set; }
 
 		static OwinRequestWrapper()
 		{
@@ -46,24 +45,21 @@ namespace SimpleStack
 			get { return request; }
 		}
 
-		public OwinRequestWrapper(IOwinRequest request)
-			: this(null, request) {}
+		//public OwinRequestWrapper(IOwinRequest request)
+		//	: this(null, request) {}
 
 		public OwinRequestWrapper(
-			string operationName, IOwinRequest request)
+			string operationName,
+			IOwinRequest request,
+			string defaultContentType)
 		{
-			this.OperationName = operationName;
+			OperationName = operationName;
+			DefaultContentType = defaultContentType;
 			this.request = request;
 		}
 
-		public T TryResolve<T>()
-		{
-			return Container == null 
-				? EndpointHost.AppHost.TryResolve<T>()
-					: Container.TryResolve<T>();
-		}
-
 		public string OperationName { get; set; }
+		public string DefaultContentType { get; set; }
 
 		public string GetRawBody()
 		{
@@ -144,7 +140,7 @@ namespace SimpleStack
 		private string responseContentType;
 		public string ResponseContentType
 		{
-			get { return responseContentType ?? (responseContentType = this.GetResponseContentType()); }
+			get { return responseContentType ?? (responseContentType = this.GetResponseContentType(DefaultContentType)); }
 			set { this.responseContentType = value; }
 		}
 

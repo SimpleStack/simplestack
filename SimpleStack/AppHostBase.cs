@@ -1,5 +1,6 @@
-﻿using System;
+﻿using System; 
 using Funq;
+using SimpleStack.Cache;
 using SimpleStack.Interfaces;
 using SimpleStack.Logging;
 using System.Reflection;
@@ -22,14 +23,44 @@ namespace SimpleStack
 
 		private bool _initialized = false;
 
+		private IContentTypeFilter _contentTypeFilter;
+		private EndpointHostConfig _config;
+		private SimpleStackHttpHandlerFactory _simpleStackHttpHandlerFactory;
+
+		private List<Action<IHttpRequest, IHttpResponse>> _rawRequestFilters;
+		private List<Action<IHttpRequest, IHttpResponse, object>> _requestFilter;
+		private List<Action<IHttpRequest, IHttpResponse, object>> _responseFilters;
+		private HandleUncaughtExceptionDelegate _exceptionHandler;
+		private HandleServiceExceptionDelegate _serviceExceptionHandler;
+		private List<HttpHandlerResolverDelegate> _catchAllHandlers;
+
 		protected AppHostBase(string serviceName, params Assembly[] assembliesWithServices)
 		{
-			EndpointHost.ConfigureHost(this, serviceName, CreateServiceManager(assembliesWithServices));
+			ServiceManager = CreateServiceManager(assembliesWithServices);
+			_config = EndpointHostConfig.CreateNew();
+			_contentTypeFilter = new HttpResponseFilter();
+
+			_rawRequestFilters = new List<Action<IHttpRequest, IHttpResponse>>();
+			_requestFilter = new List<Action<IHttpRequest, IHttpResponse, object>>();
+			_responseFilters = new List<Action<IHttpRequest, IHttpResponse, object>>();
+			_catchAllHandlers = new List<HttpHandlerResolverDelegate>();
+			_simpleStackHttpHandlerFactory = new SimpleStackHttpHandlerFactory(this);
+			_exceptionHandler = (httpReq, httpRes, operationName, ex) =>
+				{
+					var errorMessage = String.Format("Error occured while Processing Request: {0}", ex.Message);
+					var statusCode = ex.ToStatusCode();
+					//httpRes.WriteToResponse always calls .Close in it's finally statement so 
+					//if there is a problem writing to response, by now it will be closed
+					if (!httpRes.IsClosed)
+					{
+						httpRes.WriteErrorToResponse(httpReq, httpReq.ResponseContentType, operationName, errorMessage, ex, statusCode);
+					}
+				};
 		}
 
 		protected virtual ServiceManager CreateServiceManager(params Assembly[] assembliesWithServices)
 		{
-			return new ServiceManager(assembliesWithServices);
+			return new ServiceManager(this,assembliesWithServices);
 			//Alternative way to inject Container + Service Resolver strategy
 			//return new ServiceManager(new Container(),
 			//    new ServiceController(() => assembliesWithServices.ToList().SelectMany(x => x.GetTypes())));
@@ -39,21 +70,20 @@ namespace SimpleStack
 		{
 			get
 			{
-				return EndpointHost.Config.ServiceController;
+				return _config.ServiceController;
 			}
 		}
 
 		public IServiceRoutes Routes
 		{
-			get { return EndpointHost.Config.ServiceController.Routes; }
+			get { return _config.ServiceController.Routes; }
 		}
 
 		public Container Container
 		{
 			get
 			{
-				return EndpointHost.Config.ServiceManager != null
-					? EndpointHost.Config.ServiceManager.Container : null;
+				return _config.ServiceManager.Container;
 			}
 		}
 
@@ -66,22 +96,24 @@ namespace SimpleStack
 
 			_initialized = true;
 
-			var serviceManager = EndpointHost.Config.ServiceManager;
-			if (serviceManager != null)
-			{
-				serviceManager.Init();
-				Configure(EndpointHost.Config.ServiceManager.Container);
-				serviceManager.AfterInit();
-			}
-			else
-			{
-				Configure(null);
-			}
+			ServiceManager.Init();
+			Configure(ServiceManager.Container);
+			ServiceManager.AfterInit();
 
 			// From PredefinedRoutesFeature Plugin 
 			CatchAllHandlers.Add(ProcessPredefinedRoutesRequest);
 
-			EndpointHost.AfterInit();
+			//Ensure a CacheClient is register
+			var registeredCacheClient = TryResolve<ICacheClient>();
+			using (registeredCacheClient)
+			{
+				if (registeredCacheClient == null)
+				{
+					Container.Register<ICacheClient>(new MemoryCacheClient());
+				}
+			}
+
+			//EndpointHost.AfterInit();
 		}
 
 		public abstract void Configure(Container container);
@@ -89,19 +121,19 @@ namespace SimpleStack
 		public void SetConfig(EndpointHostConfig config)
 		{
 			if (config.ServiceName == null)
-				config.ServiceName = EndpointHostConfig.Instance.ServiceName;
+				config.ServiceName = _config.ServiceName;
 
 			if (config.ServiceManager == null)
-				config.ServiceManager = EndpointHostConfig.Instance.ServiceManager;
+				config.ServiceManager = ServiceManager;
 
 			config.ServiceManager.ServiceController.EnableAccessRestrictions = config.EnableAccessRestrictions;
 
-			EndpointHost.Config = config;
+			_config = config;
 		}
 
 		public void RegisterAs<T, TAs>() where T : TAs
 		{
-			this.Container.RegisterAutoWiredAs<T, TAs>();
+			Container.RegisterAutoWiredAs<T, TAs>();
 		}
 
 		public virtual void Release(object instance)
@@ -136,12 +168,12 @@ namespace SimpleStack
 
 		public void Register<T>(T instance)
 		{
-			this.Container.Register(instance);
+			Container.Register(instance);
 		}
 
 		public T TryResolve<T>()
 		{
-			return this.Container.TryResolve<T>();
+			return Container.TryResolve<T>();
 		}
 
 		/// <summary>
@@ -174,39 +206,30 @@ namespace SimpleStack
 
 		public Dictionary<Type, Func<IHttpRequest, object>> RequestBinders
 		{
-			get { return EndpointHost.ServiceManager.ServiceController.RequestTypeFactoryMap; }
+			get { return ServiceManager.ServiceController.RequestTypeFactoryMap; }
 		}
 
 		public IContentTypeFilter ContentTypeFilters
 		{
 			get
 			{
-				return EndpointHost.ContentTypeFilter;
+				return _contentTypeFilter;
 			}
 		}
 
 		public List<Action<IHttpRequest, IHttpResponse>> PreRequestFilters
 		{
-			get
-			{
-				return EndpointHost.RawRequestFilters;
-			}
+			get { return _rawRequestFilters; }
 		}
 
 		public List<Action<IHttpRequest, IHttpResponse, object>> RequestFilters
 		{
-			get
-			{
-				return EndpointHost.RequestFilters;
-			}
+			get { return _requestFilter; }
 		}
 
 		public List<Action<IHttpRequest, IHttpResponse, object>> ResponseFilters
 		{
-			get
-			{
-				return EndpointHost.ResponseFilters;
-			}
+			get { return _responseFilters; }
 		}
 
 //		public List<IViewEngine> ViewEngines
@@ -219,25 +242,29 @@ namespace SimpleStack
 
 		public HandleUncaughtExceptionDelegate ExceptionHandler
 		{
-			get { return EndpointHost.ExceptionHandler; }
-			set { EndpointHost.ExceptionHandler = value; }
+			get { return _exceptionHandler; }
+			set { _exceptionHandler = value; }
 		}
 
+		//TODO: vdaron => Ensure we use this
 		public HandleServiceExceptionDelegate ServiceExceptionHandler
 		{
-			get { return EndpointHost.ServiceExceptionHandler; }
-			set { EndpointHost.ServiceExceptionHandler = value; }
+			get { return _serviceExceptionHandler; }
+			set { _serviceExceptionHandler = value; }
 		}
 
 		public List<HttpHandlerResolverDelegate> CatchAllHandlers
 		{
-			get { return EndpointHost.CatchAllHandlers; }
+			get { return _catchAllHandlers; }
 		}
 
 		public EndpointHostConfig Config
 		{
-			get { return EndpointHost.Config; }
+			get { return _config; }
 		}
+
+		public ServiceManager ServiceManager { get; private set; }
+		public ServiceMetadata Metadata { get { return ServiceManager.ServiceController.Metadata; } }
 
 //		public List<IPlugin> Plugins
 //		{
@@ -341,36 +368,38 @@ namespace SimpleStack
 
 		protected async Task<bool> InnerProcessRequest(IOwinContext context)
 		{
-			if (context.Request.Uri == null) 
-				return false;
-
-			var operationName = context.Request.Uri.Segments[context.Request.Uri.Segments.Length - 1];
-
-			var httpReq = new OwinRequestWrapper(operationName, context.Request);
-			var httpRes = new OwinResponseWrapper(context.Response);
-
-			if (httpReq.PathInfo == null)
-				return false;
-
-			var simpleStackHttpHandler = SimpleStackHttpHandlerFactory.GetHandler(httpReq);
-			if (simpleStackHttpHandler != null)
-			{
-				var restHandler = simpleStackHttpHandler as RestHandler;
-				if (restHandler != null)
+			return await Task.Run(() =>
 				{
-					httpReq.OperationName = operationName = restHandler.RestPath.RequestType.Name;
-				}
-				simpleStackHttpHandler.ProcessRequest(httpReq, httpRes, operationName);
-				httpRes.Close();
-				return true;
-			}
+					if (context.Request.Uri == null)
+						return false;
 
-			return false;
+					var operationName = context.Request.Uri.Segments[context.Request.Uri.Segments.Length - 1];
 
+					var httpReq = new OwinRequestWrapper(operationName, context.Request, _config.DefaultContentType);
+					var httpRes = new OwinResponseWrapper(context.Response);
+
+					if (httpReq.PathInfo == null)
+						return false;
+
+					var simpleStackHttpHandler = _simpleStackHttpHandlerFactory.GetHandler(httpReq);
+					if (simpleStackHttpHandler != null)
+					{
+						var restHandler = simpleStackHttpHandler as RestHandler;
+						if (restHandler != null)
+						{
+							httpReq.OperationName = operationName = restHandler.RestPath.RequestType.Name;
+						}
+						simpleStackHttpHandler.ProcessRequest(httpReq, httpRes, operationName);
+						httpRes.Close();
+						return true;
+					}
+
+					return false;
+				});
 			//throw new NotImplementedException("Cannot execute handler: " + simpleStackHttpHandler + " at PathInfo: " + httpReq.PathInfo);
 		}
 
-		private static ISimpleStackHttpHandler ProcessPredefinedRoutesRequest(string httpMethod, string pathInfo, string filePath)
+		private ISimpleStackHttpHandler ProcessPredefinedRoutesRequest(string httpMethod, string pathInfo, string filePath)
 		{
 			var pathParts = pathInfo.TrimStart('/').Split('/');
 			if (pathParts.Length == 0) 
@@ -395,17 +424,17 @@ namespace SimpleStack
 			var isOneWay = pathAction == "asynconeway" || pathAction == "oneway";
 
 			List<string> contentTypes;
-			if (EndpointHost.ContentTypeFilter.ContentTypeFormats.TryGetValue(pathController, out contentTypes))
+			if (_contentTypeFilter.ContentTypeFormats.TryGetValue(pathController, out contentTypes))
 			{
 				var contentType = contentTypes[0];
 
 				if (isReply)
-					return new GenericHandler(contentType, EndpointAttributes.Reply)
+					return new GenericHandler(this, contentType, EndpointAttributes.Reply)
 					{
 						RequestName = requestName
 					};
 				if (isOneWay)
-					return new GenericHandler(contentType, EndpointAttributes.OneWay)
+					return new GenericHandler(this, contentType, EndpointAttributes.OneWay)
 					{
 						RequestName = requestName
 					};
@@ -416,10 +445,7 @@ namespace SimpleStack
 
 		public virtual void Dispose()
 		{
-			if (EndpointHost.Config.ServiceManager != null)
-			{
-				EndpointHost.Config.ServiceManager.Dispose();
-			}
+			ServiceManager.Dispose();
 		}
 	}
 }

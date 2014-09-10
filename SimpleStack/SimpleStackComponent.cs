@@ -9,7 +9,7 @@ using SimpleStack.Interfaces;
 namespace SimpleStack
 {
 	using AppFunc = Func<IDictionary<string, object>, // Environment
-						 Task>; // Done
+	                     Task>; // Done
 
 	public class SimpleStackComponent
 	{

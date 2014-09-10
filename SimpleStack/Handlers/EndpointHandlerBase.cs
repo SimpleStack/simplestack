@@ -13,21 +13,32 @@ namespace SimpleStack.Handlers
 {
 	public abstract class EndpointHandlerBase : ISimpleStackHttpHandler//, IHttpHandler
 	{
+		private readonly IAppHost _appHost;
 		internal static readonly ILog Log = Logger.CreateLog ();
 		internal static readonly Dictionary<byte[], byte[]> NetworkInterfaceIpv4Addresses = new Dictionary<byte[], byte[]> ();
 		internal static readonly byte[][] NetworkInterfaceIpv6Addresses = new byte[0][];
 
 		public string RequestName { get; set; }
 
+		protected IAppHost AppHost
+		{
+			get { return _appHost; }
+		}
+
 		static EndpointHandlerBase ()
 		{
 			try {
-				IPAddressExtensions.GetAllNetworkInterfaceIpv4Addresses ().ForEach ((x, y) => NetworkInterfaceIpv4Addresses [x.GetAddressBytes ()] = y.GetAddressBytes ());
+				IPAddressExtensions.GetAllNetworkInterfaceIpv4Addresses ().ForEach((x, y) => NetworkInterfaceIpv4Addresses [x.GetAddressBytes ()] = y.GetAddressBytes ());
 
 				NetworkInterfaceIpv6Addresses = IPAddressExtensions.GetAllNetworkInterfaceIpv6Addresses ().ConvertAll (x => x.GetAddressBytes ()).ToArray ();
 			} catch (Exception ex) {
 				Log.Warn ("Failed to retrieve IP Addresses, some security restriction features may not work: " + ex.Message, ex);
 			}
+		}
+
+		protected EndpointHandlerBase(IAppHost appHost)
+		{
+			_appHost = appHost;
 		}
 
 		public EndpointAttributes HandlerAttributes { get; set; }
@@ -40,12 +51,9 @@ namespace SimpleStack.Handlers
 
 		public abstract object GetResponse (IHttpRequest httpReq, IHttpResponse httpRes, object request);
 
-		public virtual void ProcessRequest (IHttpRequest httpReq, IHttpResponse httpRes, string operationName)
-		{
-			throw new NotImplementedException ();
-		}
+		public abstract void ProcessRequest(IHttpRequest httpReq, IHttpResponse httpRes, string operationName);
 
-		public static object DeserializeHttpRequest (Type operationType, IHttpRequest httpReq, string contentType)
+		public object DeserializeHttpRequest (Type operationType, IHttpRequest httpReq, string contentType)
 		{
 			var httpMethod = httpReq.HttpMethod;
 			var queryString = httpReq.QueryString;
@@ -73,11 +81,11 @@ namespace SimpleStack.Handlers
 			return request;
 		}
 
-		protected static object CreateContentTypeRequest (IHttpRequest httpReq, Type requestType, string contentType)
+		protected object CreateContentTypeRequest (IHttpRequest httpReq, Type requestType, string contentType)
 		{
 			try {
 				if (!string.IsNullOrEmpty (contentType) && httpReq.ContentLength > 0) {
-					var deserializer = EndpointHost.AppHost.ContentTypeFilters.GetStreamDeserializer (contentType);
+					var deserializer = _appHost.ContentTypeFilters.GetStreamDeserializer (contentType);
 					if (deserializer != null) {
 						return deserializer (requestType, httpReq.InputStream);
 					}
@@ -90,11 +98,10 @@ namespace SimpleStack.Handlers
 			return requestType.CreateInstance (); //Return an empty DTO, even for empty request bodies
 		}
 
-		protected static object GetCustomRequestFromBinder (IHttpRequest httpReq, Type requestType)
+		protected object GetCustomRequestFromBinder (IHttpRequest httpReq, Type requestType)
 		{
 			Func<IHttpRequest, object> requestFactoryFn;
-			(ServiceManager ?? EndpointHost.ServiceManager).ServiceController.RequestTypeFactoryMap.TryGetValue (
-				requestType, out requestFactoryFn);
+			_appHost.ServiceManager.ServiceController.RequestTypeFactoryMap.TryGetValue(requestType, out requestFactoryFn);
 
 			return requestFactoryFn != null ? requestFactoryFn (httpReq) : null;
 		}
@@ -138,26 +145,26 @@ namespace SimpleStack.Handlers
 //				operationName);
 //		}
 
-		public static ServiceManager ServiceManager { get; set; }
+		//public ServiceManager ServiceManager { get; set; }
 
-		public static Type GetOperationType (string operationName)
+		public Type GetOperationType (string operationName)
 		{
-			return ServiceManager != null
-					? ServiceManager.Metadata.GetOperationType (operationName)
-						: EndpointHost.Metadata.GetOperationType (operationName);
+			return _appHost.Metadata.GetOperationType(operationName);
 		}
 
-		protected static object ExecuteService (object request, 
-			EndpointAttributes endpointAttributes, 
-			IHttpRequest httpReq, 
-			IHttpResponse httpRes)
+		protected object ExecuteService(object request,
+		                                EndpointAttributes endpointAttributes,
+		                                IHttpRequest httpReq,
+		                                IHttpResponse httpRes)
 		{
-			return EndpointHost.ExecuteService (request, endpointAttributes, httpReq, httpRes);
+			return _appHost.ServiceManager.ServiceController.Execute(request,
+			                                                         new HttpRequestContext(httpReq, httpRes, request,
+			                                                                                endpointAttributes));
 		}
 
 		public EndpointAttributes GetEndpointAttributes (OperationContext operationContext)
 		{
-			if (!EndpointHost.Config.EnableAccessRestrictions)
+			if (!_appHost.Config.EnableAccessRestrictions)
 				return default(EndpointAttributes);
 
 			var portRestrictions = default(EndpointAttributes);
@@ -165,7 +172,7 @@ namespace SimpleStack.Handlers
 
 			portRestrictions |= EndpointAttributesExtensions.GetAttributes (ipAddress);
 
-			//TODO: work out if the request was over a secure channel			
+			//TODO: work out if the request was over a secure channel
 			//portRestrictions |= request.IsSecureConnection ? PortRestriction.Secure : PortRestriction.InSecure;
 
 			return portRestrictions;
@@ -200,7 +207,7 @@ namespace SimpleStack.Handlers
 			Log.Error (errorMessage, ex);
 
 			try {
-				EndpointHost.ExceptionHandler (httpReq, httpRes, operationName, ex);
+				_appHost.ExceptionHandler (httpReq, httpRes, operationName, ex);
 			} catch (Exception writeErrorEx) {
 				//Exception in writing to response should not hide the original exception
 				Log.Info ("Failed to write error to response: {0}", writeErrorEx);
@@ -216,16 +223,18 @@ namespace SimpleStack.Handlers
 			if (operationName == null)
 				throw new ArgumentNullException ("operationName");
 
-			if (EndpointHost.Config.EnableFeatures != Feature.All) {
-				if (!EndpointHost.Config.HasFeature (feature)) {
-					EndpointHost.Config.HandleErrorResponse (httpReq, httpRes, HttpStatusCode.Forbidden, "Feature Not Available");
+			if (_appHost.Config.EnableFeatures != Feature.All) {
+				if (!_appHost.Config.HasFeature(feature))
+				{
+					_appHost.Config.HandleErrorResponse(httpReq, httpRes, HttpStatusCode.Forbidden, "Feature Not Available");
 					return false;
 				}
 			}
 
 			var format = feature.ToFormat ();
-			if (!EndpointHost.Metadata.CanAccess (httpReq, format, operationName)) {
-				EndpointHost.Config.HandleErrorResponse (httpReq, httpRes, HttpStatusCode.Forbidden, "Service Not Available");
+			if (!_appHost.Metadata.CanAccess(httpReq, format, operationName))
+			{
+				_appHost.Config.HandleErrorResponse(httpReq, httpRes, HttpStatusCode.Forbidden, "Service Not Available");
 				return false;
 			}
 			return true;

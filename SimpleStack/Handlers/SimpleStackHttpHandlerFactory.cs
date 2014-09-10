@@ -12,22 +12,28 @@ namespace SimpleStack.Handlers
 {
 	public class SimpleStackHttpHandlerFactory
 	{
-		static readonly List<string> WebHostRootFileNames = new List<string>();
-		static private readonly string WebHostPhysicalPath = null;
-		static private readonly string DefaultRootFileName = null;
-		static private string ApplicationBaseUrl = null;
-		static private readonly ISimpleStackHttpHandler DefaultHttpHandler = null;
-		static private readonly RedirectHttpHandler NonRootModeDefaultHttpHandler = null;
-		static private readonly ISimpleStackHttpHandler ForbiddenHttpHandler = null;
-		static private readonly ISimpleStackHttpHandler NotFoundHttpHandler = null;
-		static private readonly ISimpleStackHttpHandler StaticFileHandler = new StaticFileHandler();
-		private static readonly bool IsIntegratedPipeline = false;
-		private static readonly bool ServeDefaultHandler = false;
-		private static readonly bool AutoRedirectsDirs = false;
-		private static Func<IHttpRequest, ISimpleStackHttpHandler>[] RawHttpHandlers;
+		private readonly IAppHost _appHost;
+		//private readonly List<string> WebHostRootFileNames = new List<string>();
+		//private readonly string WebHostPhysicalPath = null;
+		//private readonly string DefaultRootFileName = null;
+		private string ApplicationBaseUrl = null;
+		private readonly ISimpleStackHttpHandler DefaultHttpHandler = null;
+		private readonly RedirectHttpHandler NonRootModeDefaultHttpHandler = null;
+		//private readonly ISimpleStackHttpHandler ForbiddenHttpHandler = null;
+		//private readonly ISimpleStackHttpHandler NotFoundHttpHandler = null;
+		//private readonly ISimpleStackHttpHandler StaticFileHandler = new StaticFileHandler();
+		//private readonly bool IsIntegratedPipeline = false;
+		//private readonly bool ServeDefaultHandler = false;
+		//private readonly bool AutoRedirectsDirs = false;
+		//private Func<IHttpRequest, ISimpleStackHttpHandler>[] RawHttpHandlers;
 
 		[ThreadStatic]
 		public static string DebugLastHandlerArgs;
+
+		public SimpleStackHttpHandlerFactory(IAppHost appHost)
+		{
+			_appHost = appHost;
+		}
 
 //		static SimpleStackHttpHandlerFactory()
 //		{
@@ -196,11 +202,11 @@ namespace SimpleStack.Handlers
 //				?? NotFoundHttpHandler;
 //		}
 //
-		private static void SetApplicationBaseUrl(string absoluteUrl)
+		private void SetApplicationBaseUrl(string absoluteUrl)
 		{
 			if (absoluteUrl == null) return;
 
-			ApplicationBaseUrl = EndpointHost.Config.WebHostUrl;
+			ApplicationBaseUrl = _appHost.Config.WebHostUrl;
 
 			var defaultRedirectUrl = DefaultHttpHandler as RedirectHttpHandler;
 			if (defaultRedirectUrl != null && defaultRedirectUrl.AbsoluteUrl == null)
@@ -212,12 +218,12 @@ namespace SimpleStack.Handlers
 					NonRootModeDefaultHttpHandler.RelativeUrl);
 		}
 
-		public static string GetBaseUrl()
+		public string GetBaseUrl()
 		{
-			return EndpointHost.Config.WebHostUrl ?? ApplicationBaseUrl;
+			return _appHost.Config.WebHostUrl ?? ApplicationBaseUrl;
 		}
 
-		public static ISimpleStackHttpHandler GetHandler(IHttpRequest httpReq)
+		public ISimpleStackHttpHandler GetHandler(IHttpRequest httpReq)
 		{
 			//foreach (var rawHttpHandler in RawHttpHandlers)
 			//{
@@ -226,11 +232,9 @@ namespace SimpleStack.Handlers
 			//		return reqInfo;
 			//}
 
-			var mode = EndpointHost.Config.SimpleStackHandlerFactoryPath;
+			var mode = _appHost.Config.SimpleStackHandlerFactoryPath;
 
 			var pathInfo = httpReq.PathInfo;
-
-
 
 			//Default Request /
 			//if (string.IsNullOrEmpty(pathInfo) || pathInfo == "/")
@@ -321,15 +325,15 @@ namespace SimpleStack.Handlers
 		//	return EndpointHost.Config.AllowFileExtensions.Contains(fileExt.Substring(1));
 		//}
 
-		public static ISimpleStackHttpHandler GetHandlerForPathInfo(string httpMethod, string pathInfo, string requestPath, string filePath)
+		public ISimpleStackHttpHandler GetHandlerForPathInfo(string httpMethod, string pathInfo, string requestPath, string filePath)
 		{
 			var pathParts = pathInfo.TrimStart('/').Split('/');
 			if (pathParts.Length == 0) 
 				return null;
 
-			var restPath = RestHandler.FindMatchingRestPath(httpMethod, pathInfo);
+			var restPath = _appHost.ServiceManager.ServiceController.GetRestPathForRequest(httpMethod, pathInfo);
 			if (restPath != null)
-				return new RestHandler { RestPath = restPath, RequestName = restPath.RequestType.Name };
+				return new RestHandler(_appHost) { RestPath = restPath, RequestName = restPath.RequestType.Name };
 
 			return ProcessPredefinedRoutesRequest(httpMethod, pathInfo, filePath);
 
@@ -365,14 +369,14 @@ namespace SimpleStack.Handlers
 			//	return ShouldAllow(requestPath) ? StaticFileHandler : ForbiddenHttpHandler;
 			//}
 
-			return GetCatchAllHandlerIfAny(httpMethod, pathInfo, filePath);
+			//return GetCatchAllHandlerIfAny(httpMethod, pathInfo, filePath);
 		}
 
-		private static ISimpleStackHttpHandler GetCatchAllHandlerIfAny(string httpMethod, string pathInfo, string filePath)
+		private ISimpleStackHttpHandler GetCatchAllHandlerIfAny(string httpMethod, string pathInfo, string filePath)
 		{
-			if (EndpointHost.CatchAllHandlers != null)
+			if (_appHost.CatchAllHandlers != null)
 			{
-				foreach (var httpHandlerResolver in EndpointHost.CatchAllHandlers)
+				foreach (var httpHandlerResolver in _appHost.CatchAllHandlers)
 				{
 					var httpHandler = httpHandlerResolver(httpMethod, pathInfo, filePath);
 					if (httpHandler != null)
@@ -382,7 +386,9 @@ namespace SimpleStack.Handlers
 
 			return null;
 		}
-		private static ISimpleStackHttpHandler ProcessPredefinedRoutesRequest(string httpMethod, string pathInfo, string filePath)
+
+		//TODO: vdaron this has been copied in AppHOst
+		private ISimpleStackHttpHandler ProcessPredefinedRoutesRequest(string httpMethod, string pathInfo, string filePath)
 		{
 			var pathParts = pathInfo.TrimStart('/').Split('/');
 			if (pathParts.Length == 0)
@@ -407,17 +413,17 @@ namespace SimpleStack.Handlers
 			var isOneWay = pathAction == "asynconeway" || pathAction == "oneway";
 
 			List<string> contentTypes;
-			if (EndpointHost.ContentTypeFilter.ContentTypeFormats.TryGetValue(pathController, out contentTypes))
+			if (_appHost.ContentTypeFilters.ContentTypeFormats.TryGetValue(pathController, out contentTypes))
 			{
 				var contentType = contentTypes[0];
 
 				if (isReply)
-					return new GenericHandler(contentType, EndpointAttributes.Reply)
+					return new GenericHandler(_appHost, contentType, EndpointAttributes.Reply)
 					{
 						RequestName = requestName
 					};
 				if (isOneWay)
-					return new GenericHandler(contentType, EndpointAttributes.OneWay)
+					return new GenericHandler(_appHost, contentType, EndpointAttributes.OneWay)
 					{
 						RequestName = requestName
 					};

@@ -16,28 +16,26 @@ namespace SimpleStack
 	{
 		public IRequestContext RequestContext { get; set; }
 
-		private IResolver resolver;
+		private IAppHost _appHost;
 		public virtual IResolver GetResolver()
 		{
-			return resolver ?? EndpointHost.AppHost;
+			return _appHost;
 		}
 
 		public virtual IAppHost GetAppHost()
 		{
-			return (resolver as IAppHost) ?? EndpointHost.AppHost;
+			return _appHost;
 		}
 
-		public virtual Service SetResolver(IResolver resolver)
+		public virtual Service SetAppHost(IAppHost resolver)
 		{
-			this.resolver = resolver;
+			_appHost = resolver;
 			return this;
 		}
 
 		public virtual T TryResolve<T>()
 		{
-			return this.GetResolver() == null
-				? default(T)
-				: this.GetResolver().TryResolve<T>();
+			return GetResolver() == null ? default(T) : GetResolver().TryResolve<T>();
 		}
 
 		public virtual T ResolveService<T>()
@@ -46,7 +44,7 @@ namespace SimpleStack
 			var requiresContext = service as IRequiresRequestContext;
 			if (requiresContext != null)
 			{
-				requiresContext.RequestContext = this.RequestContext;
+				requiresContext.RequestContext = RequestContext;
 			}
 			return service;
 		}

@@ -227,28 +227,25 @@ namespace SimpleStack.Tools
 
 			// Return an Error DTO with the exception populated
 			return responseDto;
-
-			return null;
 		}
 
 		/// <summary>
 		/// 
 		/// </summary>
-		/// <param name="iocResolver"></param>
+		/// <param name="appHost"></param>
 		/// <param name="request"></param>
 		/// <param name="ex"></param>
 		/// <returns></returns>
-		public static object HandleException(IResolver iocResolver, object request, Exception ex)
+		public static object HandleException(IAppHost appHost, object request, Exception ex)
 		{
-			if (EndpointHost.Config != null && EndpointHost.Config.ReturnsInnerException
-				&& ex.InnerException != null && !(ex is IHttpError))
+			if (appHost.Config.ReturnsInnerException && ex.InnerException != null && !(ex is IHttpError))
 			{
 				ex = ex.InnerException;
 			}
 
 			var responseStatus = ex.ToResponseStatus();
 
-			if (EndpointHost.DebugMode)
+			if (appHost.Config.DebugMode)
 			{
 				// View stack trace in tests and on the client
 				responseStatus.StackTrace = GetRequestErrorBody(request) + "\n" + ex;

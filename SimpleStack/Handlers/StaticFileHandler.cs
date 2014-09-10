@@ -1,293 +1,292 @@
-﻿using System;
-using System.Threading.Tasks;
-using SimpleStack.Interfaces;
-using SimpleStack.Logging;
-using System.IO;
-using SimpleStack.Extensions;
-using System.Collections.Generic;
-using SimpleStack.Tools;
+﻿//using System;
+//using System.Threading.Tasks;
+//using SimpleStack.Interfaces;
+//using SimpleStack.Logging;
+//using System.IO;
+//using SimpleStack.Extensions;
+//using System.Collections.Generic;
+//using SimpleStack.Tools;
 
-namespace SimpleStack.Handlers
-{
+//namespace SimpleStack.Handlers
+//{
+//	class StaticFileHandler : ISimpleStackHttpHandler
+//	{
+//		private static readonly ILog log = Logger.CreateLog();
 
-	class StaticFileHandler : ISimpleStackHttpHandler
-	{
-		private static readonly ILog log = Logger.CreateLog();
+////		public void ProcessRequest(HttpContext context)
+////		{
+////			ProcessRequest(
+////				new HttpRequestWrapper(null, context.Request),
+////				new HttpResponseWrapper(context.Response), 
+////				null);
+////		}
 
-//		public void ProcessRequest(HttpContext context)
+//		private DateTime DefaultFileModified { get; set; }
+//		private string DefaultFilePath { get; set; }
+//		private byte[] DefaultFileContents { get; set; }
+
+//		/// <summary>
+//		/// Keep default file contents in-memory
+//		/// </summary>
+//		/// <param name="defaultFilePath"></param>
+//		public void SetDefaultFile(string defaultFilePath)
 //		{
-//			ProcessRequest(
-//				new HttpRequestWrapper(null, context.Request),
-//				new HttpResponseWrapper(context.Response), 
-//				null);
+//			try
+//			{
+//				this.DefaultFileContents = File.ReadAllBytes(defaultFilePath);
+//				this.DefaultFilePath = defaultFilePath;
+//				this.DefaultFileModified = File.GetLastWriteTime(defaultFilePath);
+//			}
+//			catch (Exception ex)
+//			{
+//				log.Error(ex.Message, ex);
+//			}
 //		}
 
-		private DateTime DefaultFileModified { get; set; }
-		private string DefaultFilePath { get; set; }
-		private byte[] DefaultFileContents { get; set; }
+//		public void ProcessRequest(IHttpRequest request, IHttpResponse response, string operationName)
+//		{
+//			response.EndHttpRequest(skipClose: true, afterBody: r => {
+//				var fileName = request.GetPhysicalPath();
 
-		/// <summary>
-		/// Keep default file contents in-memory
-		/// </summary>
-		/// <param name="defaultFilePath"></param>
-		public void SetDefaultFile(string defaultFilePath)
-		{
-			try
-			{
-				this.DefaultFileContents = File.ReadAllBytes(defaultFilePath);
-				this.DefaultFilePath = defaultFilePath;
-				this.DefaultFileModified = File.GetLastWriteTime(defaultFilePath);
-			}
-			catch (Exception ex)
-			{
-				log.Error(ex.Message, ex);
-			}
-		}
+//				var fi = new FileInfo(fileName);
+//				if (!fi.Exists)
+//				{
+//					if ((fi.Attributes & FileAttributes.Directory) != 0)
+//					{
+//						foreach (var defaultDoc in EndpointHost.Config.DefaultDocuments)
+//						{
+//							var defaultFileName = Path.Combine(fi.FullName, defaultDoc);
+//							if (!File.Exists(defaultFileName)) continue;
+//							r.Redirect(request.GetPathUrl() + '/' + defaultDoc);
+//							return;
+//						}
+//					}
 
-		public void ProcessRequest(IHttpRequest request, IHttpResponse response, string operationName)
-		{
-			response.EndHttpRequest(skipClose: true, afterBody: r => {
-				var fileName = request.GetPhysicalPath();
+//					if (!fi.Exists)
+//					{
+//						var originalFileName = fileName;
 
-				var fi = new FileInfo(fileName);
-				if (!fi.Exists)
-				{
-					if ((fi.Attributes & FileAttributes.Directory) != 0)
-					{
-						foreach (var defaultDoc in EndpointHost.Config.DefaultDocuments)
-						{
-							var defaultFileName = Path.Combine(fi.FullName, defaultDoc);
-							if (!File.Exists(defaultFileName)) continue;
-							r.Redirect(request.GetPathUrl() + '/' + defaultDoc);
-							return;
-						}
-					}
+//						if (Env.IsMono)
+//						{
+//							//Create a case-insensitive file index of all host files
+//							if (allFiles == null)
+//								allFiles = CreateFileIndex(request.ApplicationFilePath);
+//							if (allDirs == null)
+//								allDirs = CreateDirIndex(request.ApplicationFilePath);
 
-					if (!fi.Exists)
-					{
-						var originalFileName = fileName;
+//							if (allFiles.TryGetValue(fileName.ToLower(), out fileName))
+//							{
+//								fi = new FileInfo(fileName);
+//							}
+//						}
 
-						if (Env.IsMono)
-						{
-							//Create a case-insensitive file index of all host files
-							if (allFiles == null)
-								allFiles = CreateFileIndex(request.ApplicationFilePath);
-							if (allDirs == null)
-								allDirs = CreateDirIndex(request.ApplicationFilePath);
+//						if (!fi.Exists)
+//						{
+//							var msg = "Static File '" + request.PathInfo + "' not found.";
+//							log.WarnFormat("{0} in path: {1}", msg, originalFileName);
+//							throw new HttpError(404, msg);
+//						}
+//					}
+//				}
 
-							if (allFiles.TryGetValue(fileName.ToLower(), out fileName))
-							{
-								fi = new FileInfo(fileName);
-							}
-						}
+//				TimeSpan maxAge;
+//				if (r.ContentType != null && EndpointHost.Config.AddMaxAgeForStaticMimeTypes.TryGetValue(r.ContentType, out maxAge))
+//				{
+//					r.AddHeader(HttpHeaders.CacheControl, "max-age=" + maxAge.TotalSeconds);
+//				}
 
-						if (!fi.Exists)
-						{
-							var msg = "Static File '" + request.PathInfo + "' not found.";
-							log.WarnFormat("{0} in path: {1}", msg, originalFileName);
-							throw new HttpError(404, msg);
-						}
-					}
-				}
+//				if (request.HasNotModifiedSince(fi.LastWriteTime))
+//				{
+//					r.ContentType = MimeTypes.GetMimeType(fileName);
+//					r.StatusCode = 304;
+//					return;
+//				}
 
-				TimeSpan maxAge;
-				if (r.ContentType != null && EndpointHost.Config.AddMaxAgeForStaticMimeTypes.TryGetValue(r.ContentType, out maxAge))
-				{
-					r.AddHeader(HttpHeaders.CacheControl, "max-age=" + maxAge.TotalSeconds);
-				}
+//				try
+//				{
+//					r.AddHeaderLastModified(fi.LastWriteTime);
+//					r.ContentType = MimeTypes.GetMimeType(fileName);
 
-				if (request.HasNotModifiedSince(fi.LastWriteTime))
-				{
-					r.ContentType = MimeTypes.GetMimeType(fileName);
-					r.StatusCode = 304;
-					return;
-				}
+//					if (fileName.EqualsIgnoreCase(this.DefaultFilePath))
+//					{
+//						if (fi.LastWriteTime > this.DefaultFileModified)
+//							SetDefaultFile(this.DefaultFilePath); //reload
 
-				try
-				{
-					r.AddHeaderLastModified(fi.LastWriteTime);
-					r.ContentType = MimeTypes.GetMimeType(fileName);
+//						r.OutputStream.Write(this.DefaultFileContents, 0, this.DefaultFileContents.Length);
+//						r.Close();
+//						return;
+//					}
 
-					if (fileName.EqualsIgnoreCase(this.DefaultFilePath))
-					{
-						if (fi.LastWriteTime > this.DefaultFileModified)
-							SetDefaultFile(this.DefaultFilePath); //reload
+//					if (EndpointHost.Config.AllowPartialResponses)
+//						r.AddHeader(HttpHeaders.AcceptRanges, "bytes");
+//					long contentLength = fi.Length;
+//					long rangeStart, rangeEnd;
+//					var rangeHeader = request.Headers[HttpHeaders.Range];
+//					if (EndpointHost.Config.AllowPartialResponses && rangeHeader != null)
+//					{
+//						rangeHeader.ExtractHttpRanges(contentLength, out rangeStart, out rangeEnd);
+//						r.AddHttpRangeResponseHeaders(rangeStart: rangeStart, rangeEnd: rangeEnd, contentLength: contentLength);
+//					}
+//					else
+//					{
+//						rangeStart = 0;
+//						rangeEnd = contentLength - 1;
+//						r.SetContentLength(contentLength); //throws with ASP.NET webdev server non-IIS pipelined mode
+//					}
+//					var outputStream = r.OutputStream;
+//					using (var fs = fi.OpenRead())
+//					{
+//						if (rangeStart != 0 || rangeEnd != fi.Length - 1)
+//						{
+//							fs.WritePartialTo(outputStream, rangeStart, rangeEnd);
+//						}
+//						else
+//						{
+//							fs.WriteTo(outputStream);
+//							outputStream.Flush();
+//						}
+//					}
+//				}
+//				catch (System.Net.HttpListenerException ex)
+//				{
+//					if (ex.ErrorCode == 1229)
+//						return;
+//					//Error: 1229 is "An operation was attempted on a nonexistent network connection"
+//					//This exception occures when http stream is terminated by web browser because user
+//					//seek video forward and new http request will be sent by browser
+//					//with attribute in header "Range: bytes=newSeekPosition-"
+//					throw;
+//				}
+//				catch (Exception ex)
+//				{
+//					log.ErrorFormat("Static file {0} forbidden: {1}", request.PathInfo, ex.Message);
+//					throw new HttpError(403, "Forbidden.");
+//				}
+//			});
+//		}
 
-						r.OutputStream.Write(this.DefaultFileContents, 0, this.DefaultFileContents.Length);
-						r.Close();
-						return;
-					}
+//		static Dictionary<string, string> CreateFileIndex(string appFilePath)
+//		{
+//			log.Debug("Building case-insensitive fileIndex for Mono at: "
+//				+ appFilePath);
 
-					if (EndpointHost.Config.AllowPartialResponses)
-						r.AddHeader(HttpHeaders.AcceptRanges, "bytes");
-					long contentLength = fi.Length;
-					long rangeStart, rangeEnd;
-					var rangeHeader = request.Headers[HttpHeaders.Range];
-					if (EndpointHost.Config.AllowPartialResponses && rangeHeader != null)
-					{
-						rangeHeader.ExtractHttpRanges(contentLength, out rangeStart, out rangeEnd);
-						r.AddHttpRangeResponseHeaders(rangeStart: rangeStart, rangeEnd: rangeEnd, contentLength: contentLength);
-					}
-					else
-					{
-						rangeStart = 0;
-						rangeEnd = contentLength - 1;
-						r.SetContentLength(contentLength); //throws with ASP.NET webdev server non-IIS pipelined mode
-					}
-					var outputStream = r.OutputStream;
-					using (var fs = fi.OpenRead())
-					{
-						if (rangeStart != 0 || rangeEnd != fi.Length - 1)
-						{
-							fs.WritePartialTo(outputStream, rangeStart, rangeEnd);
-						}
-						else
-						{
-							fs.WriteTo(outputStream);
-							outputStream.Flush();
-						}
-					}
-				}
-				catch (System.Net.HttpListenerException ex)
-				{
-					if (ex.ErrorCode == 1229)
-						return;
-					//Error: 1229 is "An operation was attempted on a nonexistent network connection"
-					//This exception occures when http stream is terminated by web browser because user
-					//seek video forward and new http request will be sent by browser
-					//with attribute in header "Range: bytes=newSeekPosition-"
-					throw;
-				}
-				catch (Exception ex)
-				{
-					log.ErrorFormat("Static file {0} forbidden: {1}", request.PathInfo, ex.Message);
-					throw new HttpError(403, "Forbidden.");
-				}
-			});
-		}
+//			var caseInsensitiveLookup = new Dictionary<string, string>();
+//			foreach (var file in GetFiles(appFilePath))
+//			{
+//				caseInsensitiveLookup[file.ToLower()] = file;
+//			}
 
-		static Dictionary<string, string> CreateFileIndex(string appFilePath)
-		{
-			log.Debug("Building case-insensitive fileIndex for Mono at: "
-				+ appFilePath);
+//			return caseInsensitiveLookup;
+//		}
 
-			var caseInsensitiveLookup = new Dictionary<string, string>();
-			foreach (var file in GetFiles(appFilePath))
-			{
-				caseInsensitiveLookup[file.ToLower()] = file;
-			}
+//		static Dictionary<string, string> CreateDirIndex(string appFilePath)
+//		{
+//			var indexDirs = new Dictionary<string, string>();
 
-			return caseInsensitiveLookup;
-		}
+//			foreach (var dir in GetDirs(appFilePath))
+//			{
+//				indexDirs[dir.ToLower()] = dir;
+//			}
 
-		static Dictionary<string, string> CreateDirIndex(string appFilePath)
-		{
-			var indexDirs = new Dictionary<string, string>();
+//			return indexDirs;
+//		}
 
-			foreach (var dir in GetDirs(appFilePath))
-			{
-				indexDirs[dir.ToLower()] = dir;
-			}
+//		public bool IsReusable
+//		{
+//			get { return true; }
+//		}
 
-			return indexDirs;
-		}
+//		public static bool DirectoryExists(string dirPath, string appFilePath)
+//		{
+//			if (dirPath == null) return false;
 
-		public bool IsReusable
-		{
-			get { return true; }
-		}
+//			try
+//			{
+//				if (!Env.IsMono)
+//					return Directory.Exists(dirPath);
+//			}
+//			catch
+//			{
+//				return false;
+//			}
 
-		public static bool DirectoryExists(string dirPath, string appFilePath)
-		{
-			if (dirPath == null) return false;
+//			if (allDirs == null)
+//				allDirs = CreateDirIndex(appFilePath);
 
-			try
-			{
-				if (!Env.IsMono)
-					return Directory.Exists(dirPath);
-			}
-			catch
-			{
-				return false;
-			}
+//			var foundDir = allDirs.ContainsKey(dirPath.ToLower());
 
-			if (allDirs == null)
-				allDirs = CreateDirIndex(appFilePath);
+//			//log.DebugFormat("Found dirPath {0} in Mono: ", dirPath, foundDir);
 
-			var foundDir = allDirs.ContainsKey(dirPath.ToLower());
+//			return foundDir;
+//		}
 
-			//log.DebugFormat("Found dirPath {0} in Mono: ", dirPath, foundDir);
+//		private static Dictionary<string, string> allDirs; //populated by GetFiles()
+//		private static Dictionary<string, string> allFiles;
 
-			return foundDir;
-		}
+//		static IEnumerable<string> GetFiles(string path)
+//		{
+//			var queue = new Queue<string>();
+//			queue.Enqueue(path);
 
-		private static Dictionary<string, string> allDirs; //populated by GetFiles()
-		private static Dictionary<string, string> allFiles;
+//			while (queue.Count > 0)
+//			{
+//				path = queue.Dequeue();
+//				try
+//				{
+//					foreach (string subDir in Directory.GetDirectories(path))
+//					{
+//						queue.Enqueue(subDir);
+//					}
+//				}
+//				catch (Exception ex)
+//				{
+//					Console.Error.WriteLine(ex);
+//				}
+//				string[] files = null;
+//				try
+//				{
+//					files = Directory.GetFiles(path);
+//				}
+//				catch (Exception ex)
+//				{
+//					Console.Error.WriteLine(ex);
+//				}
+//				if (files != null)
+//				{
+//					for (int i = 0; i < files.Length; i++)
+//					{
+//						yield return files[i];
+//					}
+//				}
+//			}
+//		}
 
-		static IEnumerable<string> GetFiles(string path)
-		{
-			var queue = new Queue<string>();
-			queue.Enqueue(path);
+//		static List<string> GetDirs(string path)
+//		{
+//			var queue = new Queue<string>();
+//			queue.Enqueue(path);
 
-			while (queue.Count > 0)
-			{
-				path = queue.Dequeue();
-				try
-				{
-					foreach (string subDir in Directory.GetDirectories(path))
-					{
-						queue.Enqueue(subDir);
-					}
-				}
-				catch (Exception ex)
-				{
-					Console.Error.WriteLine(ex);
-				}
-				string[] files = null;
-				try
-				{
-					files = Directory.GetFiles(path);
-				}
-				catch (Exception ex)
-				{
-					Console.Error.WriteLine(ex);
-				}
-				if (files != null)
-				{
-					for (int i = 0; i < files.Length; i++)
-					{
-						yield return files[i];
-					}
-				}
-			}
-		}
+//			var results = new List<string>();
 
-		static List<string> GetDirs(string path)
-		{
-			var queue = new Queue<string>();
-			queue.Enqueue(path);
+//			while (queue.Count > 0)
+//			{
+//				path = queue.Dequeue();
+//				try
+//				{
+//					foreach (string subDir in Directory.GetDirectories(path))
+//					{
+//						queue.Enqueue(subDir);
+//						results.Add(subDir);
+//					}
+//				}
+//				catch (Exception ex)
+//				{
+//					Console.Error.WriteLine(ex);
+//				}
+//			}
 
-			var results = new List<string>();
-
-			while (queue.Count > 0)
-			{
-				path = queue.Dequeue();
-				try
-				{
-					foreach (string subDir in Directory.GetDirectories(path))
-					{
-						queue.Enqueue(subDir);
-						results.Add(subDir);
-					}
-				}
-				catch (Exception ex)
-				{
-					Console.Error.WriteLine(ex);
-				}
-			}
-
-			return results;
-		}
-	}
-}
+//			return results;
+//		}
+//	}
+//}
 

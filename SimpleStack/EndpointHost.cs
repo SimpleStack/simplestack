@@ -18,11 +18,12 @@ namespace SimpleStack
 
 	public delegate object HandleServiceExceptionDelegate(IHttpRequest httpReq, object request, Exception ex);
 
+	
 	public class EndpointHost
 	{
 		public static IAppHost AppHost { get; internal set; }
 
-		public static IContentTypeFilter ContentTypeFilter { get; set; }
+		public static IContentTypeFilter ContentTypeFilter { get; private set; }
 
 		public static List<Action<IHttpRequest, IHttpResponse>> RawRequestFilters { get; private set; }
 
@@ -63,9 +64,9 @@ namespace SimpleStack
 //			};
 
 			//Default Config for projects that want to use components but not WebFramework (e.g. MVC)
-			Config = new EndpointHostConfig(
-				"Empty Config",
-				new ServiceManager(new Container(), new ServiceController(null)));
+			//Config = new EndpointHostConfig(
+			//	"Empty Config",
+			//	new ServiceManager(new Container(), new ServiceController( null)));
 		}
 
 		// Pre user config
@@ -258,6 +259,7 @@ namespace SimpleStack
 
 		private static EndpointHostConfig config;
 
+		[Obsolete]
 		public static EndpointHostConfig Config
 		{
 			get

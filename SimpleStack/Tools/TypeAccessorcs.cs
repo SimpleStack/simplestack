@@ -11,9 +11,9 @@ namespace SimpleStack.Tools
 {
 	internal class TypeAccessor
 	{
-		internal ParseStringDelegate GetProperty;
-		internal SetPropertyDelegate SetProperty;
-		internal Type PropertyType;
+		//internal ParseStringDelegate GetProperty;
+		//internal SetPropertyDelegate SetProperty;
+		//internal Type PropertyType;
 
 		//public static Type ExtractType(ITypeSerializer Serializer, string strType)
 		//{

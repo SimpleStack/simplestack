@@ -1,4 +1,5 @@
 ﻿using System;
+using SimpleStack.Interfaces;
 using SimpleStack.Logging;
 using System.Reflection;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ namespace SimpleStack
 {
 	public class ServiceManager : IDisposable
 	{
+		private readonly IAppHost _appHost;
 		private static readonly ILog Log = Logger.CreateLog ();
 
 		private ContainerResolveCache _typeFactory;
@@ -19,16 +21,17 @@ namespace SimpleStack
 		//public ServiceOperations ServiceOperations { get; set; }
 		//public ServiceOperations AllServiceOperations { get; set; }
 
-		public ServiceManager(params Assembly[] assembliesWithServices)
+		public ServiceManager(IAppHost appHost, params Assembly[] assembliesWithServices)
 		{
+			_appHost = appHost;
 			if (assembliesWithServices == null || assembliesWithServices.Length == 0)
 				throw new ArgumentException(
 					"No Assemblies provided in your AppHost's base constructor.\n"
 					+ "To register your services, please provide the assemblies where your web services are defined.");
 
 			Container = new Container { DefaultOwner = Owner.External };
-			Metadata = new ServiceMetadata();
-			ServiceController = new ServiceController(() => GetAssemblyTypes(assembliesWithServices), Metadata);
+			Metadata = new ServiceMetadata(_appHost);
+			ServiceController = new ServiceController(_appHost,() => GetAssemblyTypes(assembliesWithServices), Metadata);
 		}
 
 		//public ServiceManager(bool autoInitialize, params Assembly[] assembliesWithServices)

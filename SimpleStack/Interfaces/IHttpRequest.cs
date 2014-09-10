@@ -8,7 +8,7 @@ namespace SimpleStack.Interfaces
 	/// <summary>
 	/// A thin wrapper around ASP.NET or HttpListener's HttpRequest
 	/// </summary>
-	public interface IHttpRequest : IResolver
+	public interface IHttpRequest //: IResolver
 	{
 		/// <summary>
 		/// The underlying ASP.NET or HttpListener HttpRequest

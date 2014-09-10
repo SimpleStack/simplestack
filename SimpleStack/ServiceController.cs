@@ -26,20 +26,22 @@ namespace SimpleStack
 
 	public class ServiceController : IServiceController
 	{
+		private readonly IAppHost _appHost;
 		private static readonly ILog Log = Logger.CreateLog();
 		private const string ResponseDtoSuffix = "Response";
 
-		private IResolver _resolver;
+		//private IResolver _resolver;
 		readonly Dictionary<Type, ServiceExecFn> _requestExecMap = new Dictionary<Type, ServiceExecFn>();
 		readonly Dictionary<Type, RestrictAttribute> _requestServiceAttrs = new Dictionary<Type, RestrictAttribute>();
 
-		public ServiceController(Func<IEnumerable<Type>> resolveServicesFn, ServiceMetadata metadata = null)
+		public ServiceController(IAppHost appHost, Func<IEnumerable<Type>> resolveServicesFn, ServiceMetadata metadata = null)
 		{
-			this.Metadata = metadata ?? new ServiceMetadata();
+			_appHost = appHost;
+			Metadata = metadata ?? new ServiceMetadata(appHost);
 
-			this.RequestTypeFactoryMap = new Dictionary<Type, Func<IHttpRequest, object>>();
-			this.EnableAccessRestrictions = true;
-			this.ResolveServicesFn = resolveServicesFn;
+			RequestTypeFactoryMap = new Dictionary<Type, Func<IHttpRequest, object>>();
+			EnableAccessRestrictions = true;
+			ResolveServicesFn = resolveServicesFn;
 		}
 
 		public bool EnableAccessRestrictions { get; set; }
@@ -52,11 +54,11 @@ namespace SimpleStack
 
 		public IServiceRoutes Routes { get { return Metadata.Routes; } }
 
-		public IResolver Resolver
-		{
-			get { return _resolver ?? EndpointHost.AppHost; }
-			set { _resolver = value; }
-		}
+		//public IResolver Resolver
+		//{
+		//	get { return _resolver ?? EndpointHost.AppHost; }
+		//	set { _resolver = value; }
+		//}
 
 		public Func<IEnumerable<Type>> ResolveServicesFn { get; set; }
 
@@ -145,7 +147,7 @@ namespace SimpleStack
 
 			if (typeof(IRequiresRequestStream).IsAssignableFrom(requestType))
 			{
-				this.RequestTypeFactoryMap[requestType] = httpReq => {
+				RequestTypeFactoryMap[requestType] = httpReq => {
 					var rawReq = (IRequiresRequestStream)requestType.CreateInstance();
 					rawReq.RequestStream = httpReq.InputStream;
 					return rawReq;
@@ -350,7 +352,7 @@ namespace SimpleStack
 			}
 		}
 
-		private static object ManagedServiceExec(
+		private object ManagedServiceExec(
 			ServiceExecFn serviceExec,
 			object service, IRequestContext requestContext, object dto)
 		{
@@ -366,15 +368,8 @@ namespace SimpleStack
 				}
 				finally
 				{
-					if (EndpointHost.AppHost != null)
-					{
-						//Gets disposed by AppHost or ContainerAdapter if set
-						EndpointHost.AppHost.Release(service);
-					}
-					else
-					{
-						using (service as IDisposable) { }
-					}
+					//Gets disposed by AppHost or ContainerAdapter if set
+					_appHost.Release(service);
 				}
 			}
 			catch (TargetInvocationException tex)
@@ -483,7 +478,8 @@ namespace SimpleStack
 
 		public void AssertServiceRestrictions(Type requestType, EndpointAttributes actualAttributes)
 		{
-			if (EndpointHost.Config != null && !EndpointHost.Config.EnableAccessRestrictions) return;
+			if (!_appHost.Config.EnableAccessRestrictions)
+				return;
 
 			RestrictAttribute restrictAttr;
 			var hasNoAccessRestrictions = !_requestServiceAttrs.TryGetValue(requestType, out restrictAttr)

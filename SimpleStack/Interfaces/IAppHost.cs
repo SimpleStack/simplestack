@@ -89,6 +89,10 @@ namespace SimpleStack.Interfaces
 		/// </summary>
 		EndpointHostConfig Config { get; }
 
+		ServiceManager ServiceManager { get; }
+
+		ServiceMetadata Metadata { get; } 
+
 		/// <summary>
 		/// Register an Adhoc web service on Startup
 		/// </summary>

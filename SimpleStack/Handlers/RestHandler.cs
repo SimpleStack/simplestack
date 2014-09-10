@@ -12,18 +12,17 @@ namespace SimpleStack.Handlers
 	//TODO: vdaron - restore MINIROFILER
 	public class RestHandler : EndpointHandlerBase
 	{
-		public RestHandler()
+		public RestHandler(IAppHost appHost)
+			:base(appHost)
 		{
 			this.HandlerAttributes = EndpointAttributes.Reply;
 		}
 
 		private new static readonly ILog Log = Logger.CreateLog();
 
-		public static IRestPath FindMatchingRestPath(string httpMethod, string pathInfo)
+		public IRestPath FindMatchingRestPath(string httpMethod, string pathInfo)
 		{
-			var controller = ServiceManager != null
-				? ServiceManager.ServiceController
-				: EndpointHost.Config.ServiceController;
+			var controller = AppHost.ServiceManager.ServiceController;
 
 			return controller.GetRestPathForRequest(httpMethod, pathInfo);
 		}
@@ -53,11 +52,11 @@ namespace SimpleStack.Handlers
 				//operationName = restPath.RequestType.Name;
 
 				var callback = httpReq.GetJsonpCallback();
-				var doJsonp = EndpointHost.Config.AllowJsonpRequests
+				var doJsonp = AppHost.Config.AllowJsonpRequests
 					&& !string.IsNullOrEmpty(callback);
 
 				var responseContentType = httpReq.ResponseContentType;
-				EndpointHost.Config.AssertContentType(responseContentType);
+				AppHost.Config.AssertContentType(responseContentType);
 
 				var request = GetRequest(httpReq, restPath);
 				if (EndpointHost.ApplyRequestFilters(httpReq, httpRes, request)) 
@@ -68,13 +67,13 @@ namespace SimpleStack.Handlers
 					return;
 
 				if (doJsonp && !(response is CompressedResult))
-					httpRes.WriteToResponse(httpReq, response, (callback + "(").ToUtf8Bytes(), ")".ToUtf8Bytes());
+					httpRes.WriteToResponse(AppHost.Config, httpReq, response, (callback + "(").ToUtf8Bytes(), ")".ToUtf8Bytes());
 				else
-					httpRes.WriteToResponse(httpReq, response);
+					httpRes.WriteToResponse(AppHost.Config, httpReq, response);
 			}
 			catch (Exception ex)
 			{
-				if (!EndpointHost.Config.WriteErrorsToResponse) throw;
+				if (!AppHost.Config.WriteErrorsToResponse) throw;
 				HandleException(httpReq, httpRes, operationName, ex);
 			}
 		}
@@ -87,7 +86,7 @@ namespace SimpleStack.Handlers
 				HandlerAttributes | requestContentType | httpReq.GetAttributes(), httpReq, httpRes);
 		}
 
-		private static object GetRequest(IHttpRequest httpReq, IRestPath restPath)
+		private object GetRequest(IHttpRequest httpReq, IRestPath restPath)
 		{
 			var requestType = restPath.RequestType;
 

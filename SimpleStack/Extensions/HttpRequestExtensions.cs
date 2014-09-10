@@ -167,14 +167,7 @@ namespace SimpleStack.Extensions
 //			return appUrl;
 //		}
 
-		public static string GetApplicationUrl(this IHttpRequest httpReq)
-		{
-			var url = new Uri(httpReq.AbsoluteUri);
-			var baseUrl = url.Scheme + "://" + url.Host;
-			if (url.Port != 80) baseUrl += ":" + url.Port;
-			var appUrl = baseUrl.CombineWith(EndpointHost.Config.SimpleStackHandlerFactoryPath);
-			return appUrl;
-		}
+
 
 		public static string GetHttpMethodOverride(this IHttpRequest httpReq)
 		{
@@ -283,12 +276,12 @@ namespace SimpleStack.Extensions
 
 		public static int ToStatusCode(this Exception ex)
 		{
-			int errorStatus;
-			if (EndpointHost.Config != null && 
-				EndpointHost.Config.MapExceptionToStatusCode.TryGetValue(ex.GetType(), out errorStatus))
-			{
-				return errorStatus;
-			}
+			//int errorStatus;
+			//if (EndpointHost.Config != null && 
+			//	EndpointHost.Config.MapExceptionToStatusCode.TryGetValue(ex.GetType(), out errorStatus))
+			//{
+			//	return errorStatus;
+			//}
 
 			if (ex is HttpError) return ((HttpError)ex).Status;
 			if (ex is NotImplementedException || ex is NotSupportedException) return (int)HttpStatusCode.MethodNotAllowed;
@@ -304,7 +297,7 @@ namespace SimpleStack.Extensions
 			return ex.GetType().Name;
 		}
 
-		public static string GetResponseContentType(this IHttpRequest httpReq)
+		public static string GetResponseContentType(this IHttpRequest httpReq, string defaultConfigContentType)
 		{
 			var specifiedContentType = GetQueryStringContentType(httpReq);
 
@@ -319,7 +312,7 @@ namespace SimpleStack.Extensions
 			//Check if request is a form submission
 			if (httpReq.HasAnyOfContentTypes(ContentType.FormUrlEncoded, ContentType.MultiPartFormData))
 			{
-				defaultContentType = EndpointHost.Config.DefaultContentType;
+				defaultContentType = defaultConfigContentType;
 			}
 
 			var availableContentTypes = EndpointHost.ContentTypeFilter.ContentTypeFormats.Values;

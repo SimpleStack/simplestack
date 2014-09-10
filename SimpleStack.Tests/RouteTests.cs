@@ -104,7 +104,7 @@ namespace SimpleStack.Tests
 
 				var response = ctx.GetResponseBodyAs<ErrorResponse>().ResponseStatus;
 				Assert.NotNull(response.StackTrace);
-				Assert.AreEqual(PafException.Message, response.Message);
+				Assert.AreEqual(PafException.PafMessage, response.Message);
 				Assert.AreEqual(typeof(PafException).Name, response.ErrorCode);
 				Assert.AreEqual(0,response.Errors.Count);
 			}
@@ -121,7 +121,7 @@ namespace SimpleStack.Tests
 
 				var response = ctx.GetResponseBodyAs<ExceptionDetailResponse>().ResponseStatus;
 				Assert.NotNull(response.StackTrace);
-				Assert.AreEqual(PafException.Message, response.Message);
+				Assert.AreEqual(PafException.PafMessage, response.Message);
 				Assert.AreEqual(typeof(PafException).Name, response.ErrorCode);
 				Assert.AreEqual(0, response.Errors.Count);
 			}
@@ -140,7 +140,7 @@ namespace SimpleStack.Tests
 				var response = ctx.GetResponseBodyAs<ExceptionDetailResponse>().ResponseStatus;
 
 				Assert.NotNull(response.StackTrace);
-				Assert.AreEqual(PafException.Message,response.Message);
+				Assert.AreEqual(PafException.PafMessage, response.Message);
 				Assert.AreEqual(typeof(PafException).Name, response.ErrorCode);
 				Assert.AreEqual(0, response.Errors.Count);
 			}
@@ -159,7 +159,7 @@ namespace SimpleStack.Tests
 				var response = ctx.GetResponseBodyAs<ExceptionDetailResponse>().ResponseStatus;
 
 				Assert.NotNull(response.StackTrace);
-				Assert.AreEqual(PafException.Message,response.Message);
+				Assert.AreEqual(PafException.PafMessage, response.Message);
 				Assert.AreEqual(typeof(PafException).Name, response.ErrorCode);
 				Assert.AreEqual(0, response.Errors.Count);
 			}

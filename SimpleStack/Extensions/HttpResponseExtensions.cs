@@ -10,10 +10,10 @@ namespace SimpleStack.Extensions
 	{
 		private static readonly ILog Log = Logger.CreateLog();
 
-		public static bool WriteToOutputStream(IHttpResponse response, object result, byte[] bodyPrefix, byte[] bodySuffix)
+		public static bool WriteToOutputStream(IHttpResponse response,EndpointHostConfig config, object result, byte[] bodyPrefix, byte[] bodySuffix)
 		{
 			var partialResult = result as IPartialWriter;
-			if (EndpointHost.Config.AllowPartialResponses && partialResult != null && partialResult.IsPartialRequest)
+			if (config.AllowPartialResponses && partialResult != null && partialResult.IsPartialRequest)
 			{
 				partialResult.WritePartialTo(response);
 				return true;
@@ -50,18 +50,18 @@ namespace SimpleStack.Extensions
 			return false;
 		}
 
-		public static bool WriteToResponse(this IHttpResponse httpRes, object result, string contentType)
+		public static bool WriteToResponse(this IHttpResponse httpRes,EndpointHostConfig config, object result, string contentType)
 		{
 			var serializer = EndpointHost.AppHost.ContentTypeFilters.GetResponseSerializer(contentType);
-			return httpRes.WriteToResponse(result, serializer, new SerializationContext(contentType));
+			return httpRes.WriteToResponse(config, result, serializer, new SerializationContext(contentType));
 		}
 
-		public static bool WriteToResponse(this IHttpResponse httpRes, IHttpRequest httpReq, object result)
+		public static bool WriteToResponse(this IHttpResponse httpRes, EndpointHostConfig config, IHttpRequest httpReq, object result)
 		{
-			return WriteToResponse(httpRes, httpReq, result, null, null);
+			return WriteToResponse(httpRes,config, httpReq, result, null, null);
 		}
 
-		public static bool WriteToResponse(this IHttpResponse httpRes, IHttpRequest httpReq, object result, byte[] bodyPrefix, byte[] bodySuffix)
+		public static bool WriteToResponse(this IHttpResponse httpRes, EndpointHostConfig config, IHttpRequest httpReq, object result, byte[] bodyPrefix, byte[] bodySuffix)
 		{
 			if (result == null)
 			{
@@ -80,16 +80,16 @@ namespace SimpleStack.Extensions
 				httpResult.RequestContext = serializationContext;
 				serializationContext.ResponseContentType = httpResult.ContentType ?? httpReq.ResponseContentType;
 				var httpResSerializer = EndpointHost.AppHost.ContentTypeFilters.GetResponseSerializer(serializationContext.ResponseContentType);
-				return httpRes.WriteToResponse(httpResult, httpResSerializer, serializationContext, bodyPrefix, bodySuffix);
+				return httpRes.WriteToResponse(config, httpResult, httpResSerializer, serializationContext, bodyPrefix, bodySuffix);
 			}
 
 			var serializer = EndpointHost.AppHost.ContentTypeFilters.GetResponseSerializer(httpReq.ResponseContentType);
-			return httpRes.WriteToResponse(result, serializer, serializationContext, bodyPrefix, bodySuffix);
+			return httpRes.WriteToResponse(config, result, serializer, serializationContext, bodyPrefix, bodySuffix);
 		}
 
-		public static bool WriteToResponse(this IHttpResponse httpRes, object result, ResponseSerializerDelegate serializer, IRequestContext serializationContext)
+		public static bool WriteToResponse(this IHttpResponse httpRes, EndpointHostConfig config, object result, ResponseSerializerDelegate serializer, IRequestContext serializationContext)
 		{
-			return httpRes.WriteToResponse(result, serializer, serializationContext, null, null);
+			return httpRes.WriteToResponse(config, result, serializer, serializationContext, null, null);
 		}
 
 		/// <summary>
@@ -103,7 +103,7 @@ namespace SimpleStack.Extensions
 		/// <param name="bodyPrefix">Add prefix to response body if any</param>
 		/// <param name="bodySuffix">Add suffix to response body if any</param>
 		/// <returns></returns>
-		public static bool WriteToResponse(this IHttpResponse response, object result, ResponseSerializerDelegate defaultAction, IRequestContext serializerCtx, byte[] bodyPrefix, byte[] bodySuffix)
+		public static bool WriteToResponse(this IHttpResponse response, EndpointHostConfig config, object result, ResponseSerializerDelegate defaultAction, IRequestContext serializerCtx, byte[] bodyPrefix, byte[] bodySuffix)
 		{
 			//using (Profiler.Current.Step("Writing to Response"))
 			{
@@ -162,7 +162,7 @@ namespace SimpleStack.Extensions
 					}
 
 					var disposableResult = result as IDisposable;
-					if (WriteToOutputStream(response, result, bodyPrefix, bodySuffix))
+					if (WriteToOutputStream(response, config, result, bodyPrefix, bodySuffix))
 					{
 						response.Flush(); //required for Compression
 						if (disposableResult != null) disposableResult.Dispose();
@@ -185,7 +185,7 @@ namespace SimpleStack.Extensions
 						response.ContentType = ContentType.JavaScript;
 					}
 
-					if (EndpointHost.Config.AppendUtf8CharsetOnContentTypes.Contains(response.ContentType))
+					if (config.AppendUtf8CharsetOnContentTypes.Contains(response.ContentType))
 					{
 						response.ContentType += ContentType.Utf8Suffix;
 					}
@@ -219,7 +219,7 @@ namespace SimpleStack.Extensions
 					//TM: It would be good to handle 'remote end dropped connection' problems here. Arguably they should at least be suppressible via configuration
 
 					//DB: Using standard ServiceStack configuration method
-					if (!EndpointHost.Config.WriteErrorsToResponse) throw;
+					if (!config.WriteErrorsToResponse) throw;
 
 					var errorMessage = String.Format(
 						"Error occured while Processing Request: [{0}] {1}", originalEx.GetType().Name, originalEx.Message);
@@ -339,14 +339,14 @@ namespace SimpleStack.Extensions
 			return dto;
 		}
 
-		public static void ApplyGlobalResponseHeaders(this HttpListenerResponse httpRes)
-		{
-			if (EndpointHost.Config == null) return;
-			foreach (var globalResponseHeader in EndpointHost.Config.GlobalResponseHeaders)
-			{
-				httpRes.AddHeader(globalResponseHeader.Key, globalResponseHeader.Value);
-			}
-		}
+		//public static void ApplyGlobalResponseHeaders(this HttpListenerResponse httpRes)
+		//{
+		//	if (EndpointHost.Config == null) return;
+		//	foreach (var globalResponseHeader in EndpointHost.Config.GlobalResponseHeaders)
+		//	{
+		//		httpRes.AddHeader(globalResponseHeader.Key, globalResponseHeader.Value);
+		//	}
+		//}
 
 //		public static void ApplyGlobalResponseHeaders(this HttpResponse httpRes)
 //		{
@@ -359,7 +359,8 @@ namespace SimpleStack.Extensions
 
 		public static void ApplyGlobalResponseHeaders(this IHttpResponse httpRes)
 		{
-			if (EndpointHost.Config == null) return;
+			if (EndpointHost.Config == null) 
+				return;
 			foreach (var globalResponseHeader in EndpointHost.Config.GlobalResponseHeaders)
 			{
 				httpRes.AddHeader(globalResponseHeader.Key, globalResponseHeader.Value);

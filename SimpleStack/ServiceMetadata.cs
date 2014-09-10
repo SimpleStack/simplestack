@@ -11,8 +11,11 @@ namespace SimpleStack
 {
 	public class ServiceMetadata
 	{
-		public ServiceMetadata()
+		private readonly IAppHost _appHost;
+
+		public ServiceMetadata(IAppHost appHost)
 		{
+			_appHost = appHost;
 			RequestTypes = new HashSet<Type>();
 			ServiceTypes = new HashSet<Type>();
 			ResponseTypes = new HashSet<Type>();
@@ -197,7 +200,7 @@ namespace SimpleStack
 
 		public bool IsVisible(IHttpRequest httpReq, Operation operation)
 		{
-			if (EndpointHost.Config != null && !EndpointHost.Config.EnableAccessRestrictions)
+			if (!_appHost.Config.EnableAccessRestrictions)
 				return true;
 
 			if (operation.RestrictTo == null)
@@ -211,7 +214,7 @@ namespace SimpleStack
 
 		public bool IsVisible(IHttpRequest httpReq, Format format, string operationName)
 		{
-			if (EndpointHost.Config != null && !EndpointHost.Config.EnableAccessRestrictions)
+			if (!_appHost.Config.EnableAccessRestrictions)
 				return true;
 
 			Operation operation;
@@ -241,7 +244,7 @@ namespace SimpleStack
 
 		public bool CanAccess(EndpointAttributes reqAttrs, Format format, string operationName)
 		{
-			if (EndpointHost.Config != null && !EndpointHost.Config.EnableAccessRestrictions)
+			if (!_appHost.Config.EnableAccessRestrictions)
 				return true;
 
 			Operation operation;
@@ -266,7 +269,7 @@ namespace SimpleStack
 
 		public bool CanAccess(Format format, string operationName)
 		{
-			if (EndpointHost.Config != null && !EndpointHost.Config.EnableAccessRestrictions)
+			if (!_appHost.Config.EnableAccessRestrictions)
 				return true;
 
 			Operation operation;
@@ -348,66 +351,66 @@ namespace SimpleStack
 		public Dictionary<string, string> Routes { get; set; }
 	}
 
-	public class XsdMetadata
-	{
-		public ServiceMetadata Metadata { get; set; }
+	//public class XsdMetadata
+	//{
+	//	public ServiceMetadata Metadata { get; set; }
 
-		public bool Flash { get; set; }
+	//	public bool Flash { get; set; }
 
-		public XsdMetadata(ServiceMetadata metadata, bool flash = false)
-		{
-			Metadata = metadata;
-			Flash = flash;
-		}
+	//	public XsdMetadata(ServiceMetadata metadata, bool flash = false)
+	//	{
+	//		Metadata = metadata;
+	//		Flash = flash;
+	//	}
 
-		public List<Type> GetAllTypes()
-		{
-			var allTypes = new List<Type>(Metadata.RequestTypes);
-			allTypes.AddRange(Metadata.ResponseTypes);
-			return allTypes;
-		}
+	//	public List<Type> GetAllTypes()
+	//	{
+	//		var allTypes = new List<Type>(Metadata.RequestTypes);
+	//		allTypes.AddRange(Metadata.ResponseTypes);
+	//		return allTypes;
+	//	}
 
-		public List<string> GetReplyOperationNames(Format format)
-		{
-			return Metadata.OperationsMap.Values
-					.Where(x => EndpointHost.Config != null
-			&& EndpointHost.Config.MetadataPagesConfig.CanAccess(format, x.Name))
-					.Where(x => !x.IsOneWay)
-					.Select(x => x.RequestType.Name)
-					.ToList();
-		}
+	//	public List<string> GetReplyOperationNames(Format format)
+	//	{
+	//		return Metadata.OperationsMap.Values
+	//				.Where(x => EndpointHost.Config != null
+	//		&& EndpointHost.Config.MetadataPagesConfig.CanAccess(format, x.Name))
+	//				.Where(x => !x.IsOneWay)
+	//				.Select(x => x.RequestType.Name)
+	//				.ToList();
+	//	}
 
-		public List<string> GetOneWayOperationNames(Format format)
-		{
-			return Metadata.OperationsMap.Values
-					.Where(x => EndpointHost.Config != null
-			&& EndpointHost.Config.MetadataPagesConfig.CanAccess(format, x.Name))
-					.Where(x => x.IsOneWay)
-					.Select(x => x.RequestType.Name)
-					.ToList();
-		}
+	//	public List<string> GetOneWayOperationNames(Format format)
+	//	{
+	//		return Metadata.OperationsMap.Values
+	//				.Where(x => EndpointHost.Config != null
+	//		&& EndpointHost.Config.MetadataPagesConfig.CanAccess(format, x.Name))
+	//				.Where(x => x.IsOneWay)
+	//				.Select(x => x.RequestType.Name)
+	//				.ToList();
+	//	}
 
-		/// <summary>
-		/// Gets the name of the base most type in the heirachy tree with the same.
-		/// 
-		/// We get an exception when trying to create a schema with multiple types of the same name
-		/// like when inheriting from a DataContract with the same name.
-		/// </summary>
-		/// <param name="type">The type.</param>
-		/// <returns></returns>
-		public static Type GetBaseTypeWithTheSameName(Type type)
-		{
-			var typesWithSameName = new Stack<Type>();
-			var baseType = type;
-			do
-			{
-				if (baseType.Name == type.Name)
-					typesWithSameName.Push(baseType);
-			} while ((baseType = baseType.BaseType) != null);
+	//	/// <summary>
+	//	/// Gets the name of the base most type in the heirachy tree with the same.
+	//	/// 
+	//	/// We get an exception when trying to create a schema with multiple types of the same name
+	//	/// like when inheriting from a DataContract with the same name.
+	//	/// </summary>
+	//	/// <param name="type">The type.</param>
+	//	/// <returns></returns>
+	//	public static Type GetBaseTypeWithTheSameName(Type type)
+	//	{
+	//		var typesWithSameName = new Stack<Type>();
+	//		var baseType = type;
+	//		do
+	//		{
+	//			if (baseType.Name == type.Name)
+	//				typesWithSameName.Push(baseType);
+	//		} while ((baseType = baseType.BaseType) != null);
 
-			return typesWithSameName.Pop();
-		}
-	}
+	//		return typesWithSameName.Pop();
+	//	}
+	//}
 
 	public static class ServiceMetadataExtensions
 	{

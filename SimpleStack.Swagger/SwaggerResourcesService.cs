@@ -48,7 +48,7 @@ namespace SimpleStack.Swagger
 
 		public object Get(Resources request)
 		{
-			var basePath = EndpointHost.Config.WebHostUrl ?? (EndpointHost.Config.UseHttpsLinks
+			var basePath = GetAppHost().Config.WebHostUrl ?? (GetAppHost().Config.UseHttpsLinks
 				                                                  ? Request.GetParentPathUrl().ToHttps()
 				                                                  : Request.GetParentPathUrl());
 
@@ -63,7 +63,8 @@ namespace SimpleStack.Swagger
 			var allOperationNames = operations.GetAllOperationNames();
 			foreach (var operationName in allOperationNames)
 			{
-				if (ResourceFilterRegex != null && !ResourceFilterRegex.IsMatch(operationName)) continue;
+				if (ResourceFilterRegex != null && !ResourceFilterRegex.IsMatch(operationName)) 
+					continue;
 				var name = operationName;
 				var operationType = allTypes.FirstOrDefault(x => x.Name == name);
 				if (operationType == null)

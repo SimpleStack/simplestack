@@ -147,18 +147,19 @@ namespace SimpleStack.Swagger
 		{
 			var httpReq = RequestContext.Get<IHttpRequest>();
 			var path = "/" + request.Name;
-			var map = EndpointHost.ServiceManager.ServiceController.RestPathMap;
+			var appHost = GetAppHost();
+			var map = appHost.ServiceManager.ServiceController.RestPathMap;
 			var paths = new List<RestPath>();
 
-			var basePath = EndpointHost.Config.WebHostUrl ?? (EndpointHost.Config.UseHttpsLinks
-																  ? httpReq.GetParentPathUrl().ToHttps()
-																  : httpReq.GetParentPathUrl());
+			var basePath = appHost.Config.WebHostUrl ?? (appHost.Config.UseHttpsLinks
+				                                             ? httpReq.GetParentPathUrl().ToHttps()
+				                                             : httpReq.GetParentPathUrl());
 
 			if (basePath.EndsWith(SwaggerResourcesService.ResourcePath, StringComparison.OrdinalIgnoreCase))
 			{
 				basePath = basePath.Substring(0, basePath.LastIndexOf(SwaggerResourcesService.ResourcePath, StringComparison.OrdinalIgnoreCase));
 			}
-			var meta = EndpointHost.Metadata;
+			var meta = appHost.Metadata;
 			foreach (var key in map.Keys)
 			{
 				paths.AddRange(map[key].Where(x => (x.Path == path || x.Path.StartsWith(path + "/") && meta.IsVisible(Request, Format.Json, x.RequestType.Name))));
@@ -392,12 +393,9 @@ namespace SimpleStack.Swagger
 			var summary = restPath.Summary;
 			var notes = restPath.Notes;
 
-			if (restPath.AllowsAllVerbs)
-			{
-				verbs.AddRange(new[] { "GET", "POST", "PUT", "DELETE" });
-			}
-			else
-				verbs.AddRange(restPath.AllowedVerbs.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries));
+			verbs.AddRange(restPath.AllowsAllVerbs
+				               ? new[] {"GET", "POST", "PUT", "DELETE"}
+				               : restPath.AllowedVerbs.Split(new[] {',', ' '}, StringSplitOptions.RemoveEmptyEntries));
 
 			var nickName = NicknameCleanerRegex.Replace(restPath.Path, "");
 

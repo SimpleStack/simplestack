@@ -12,7 +12,8 @@ namespace SimpleStack.Handlers
 
 		public EndpointAttributes ContentTypeAttribute { get; set; }
 
-		public GenericHandler(string contentType, EndpointAttributes handlerAttributes)
+		public GenericHandler(IAppHost appHost, string contentType, EndpointAttributes handlerAttributes)
+			:base(appHost)
 		{
 			this.HandlerContentType = contentType;
 			this.ContentTypeAttribute = ContentType.GetEndpointAttributes(contentType);
@@ -54,7 +55,7 @@ namespace SimpleStack.Handlers
 
 				httpReq.ResponseContentType = httpReq.GetQueryStringContentType() ?? this.HandlerContentType;
 				var callback = httpReq.QueryString["callback"];
-				var doJsonp = EndpointHost.Config.AllowJsonpRequests
+				var doJsonp = AppHost.Config.AllowJsonpRequests
 					&& !string.IsNullOrEmpty(callback);
 
 				var request = CreateRequest(httpReq, operationName);
@@ -66,13 +67,13 @@ namespace SimpleStack.Handlers
 					return;
 
 				if (doJsonp && !(response is CompressedResult))
-					httpRes.WriteToResponse(httpReq, response, (callback + "(").ToUtf8Bytes(), ")".ToUtf8Bytes());
+					httpRes.WriteToResponse(AppHost.Config,httpReq, response, (callback + "(").ToUtf8Bytes(), ")".ToUtf8Bytes());
 				else
-					httpRes.WriteToResponse(httpReq, response);
+					httpRes.WriteToResponse(AppHost.Config, httpReq, response);
 			}
 			catch (Exception ex)
 			{
-				if (!EndpointHost.Config.WriteErrorsToResponse) throw;
+				if (!AppHost.Config.WriteErrorsToResponse) throw;
 				HandleException(httpReq, httpRes, operationName, ex);
 			}
 		}
