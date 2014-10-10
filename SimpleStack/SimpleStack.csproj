@@ -70,6 +70,7 @@
   <ItemGroup>
     <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="Extensions\RequestContextExtensions.cs" />
+    <Compile Include="Extensions\UrlExtensions.cs" />
     <Compile Include="HttpResult.cs" />
     <Compile Include="Interfaces\IContentTypeSerializer.cs" />
     <Compile Include="Interfaces\IServiceBase.cs" />
