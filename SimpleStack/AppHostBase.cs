@@ -38,6 +38,8 @@ namespace SimpleStack
 		{
 			ServiceManager = CreateServiceManager(assembliesWithServices);
 			_config = EndpointHostConfig.CreateNew();
+			_config.DebugMode = GetType().Assembly.IsDebugBuild();
+
 			_contentTypeFilter = new HttpResponseFilter();
 
 			_rawRequestFilters = new List<Action<IHttpRequest, IHttpResponse>>();
@@ -70,20 +72,20 @@ namespace SimpleStack
 		{
 			get
 			{
-				return _config.ServiceController;
+				return ServiceManager.ServiceController;
 			}
 		}
 
 		public IServiceRoutes Routes
 		{
-			get { return _config.ServiceController.Routes; }
+			get { return ServiceManager.ServiceController.Routes; }
 		}
 
 		public Container Container
 		{
 			get
 			{
-				return _config.ServiceManager.Container;
+				return ServiceManager.Container;
 			}
 		}
 
@@ -123,10 +125,7 @@ namespace SimpleStack
 			if (config.ServiceName == null)
 				config.ServiceName = _config.ServiceName;
 
-			if (config.ServiceManager == null)
-				config.ServiceManager = ServiceManager;
-
-			config.ServiceManager.ServiceController.EnableAccessRestrictions = config.EnableAccessRestrictions;
+			ServiceManager.ServiceController.EnableAccessRestrictions = config.EnableAccessRestrictions;
 
 			_config = config;
 		}

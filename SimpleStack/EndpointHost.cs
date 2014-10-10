@@ -18,7 +18,6 @@ namespace SimpleStack
 
 	public delegate object HandleServiceExceptionDelegate(IHttpRequest httpReq, object request, Exception ex);
 
-	
 	public class EndpointHost
 	{
 		public static IAppHost AppHost { get; internal set; }
@@ -76,17 +75,6 @@ namespace SimpleStack
 			AppHost = appHost;
 
 			EndpointHostConfig.Instance.ServiceName = serviceName;
-			EndpointHostConfig.Instance.ServiceManager = serviceManager;
-
-			var config = EndpointHostConfig.Instance;
-			Config = config; // avoid cross-dependency on Config setter
-//			VirtualPathProvider = new FileSystemVirtualPathProvider(AppHost, Config.WebHostPhysicalPath);
-
-			Config.DebugMode = appHost.GetType().Assembly.IsDebugBuild();
-//			if (Config.DebugMode)
-//			{
-//				Plugins.Add(new RequestInfoFeature());
-//			}
 		}
 
 		// Config has changed
@@ -253,8 +241,7 @@ namespace SimpleStack
 
 		public static ServiceManager ServiceManager
 		{
-			get { return config.ServiceManager; }
-			set { config.ServiceManager = value; }
+			get { return AppHost.ServiceManager; }
 		}
 
 		private static EndpointHostConfig config;
@@ -266,25 +253,23 @@ namespace SimpleStack
 			{
 				return config;
 			}
-			set
-			{
-				if (value.ServiceName == null)
-					throw new ArgumentNullException("ServiceName");
+			//set
+			//{
+			//	if (value.ServiceName == null)
+			//		throw new ArgumentNullException("ServiceName");
 
-				if (value.ServiceController == null)
-					throw new ArgumentNullException("ServiceController");
+			//	if (value.ServiceController == null)
+			//		throw new ArgumentNullException("ServiceController");
 
-				config = value;
-				ApplyConfigChanges();
-			}
+			//	config = value;
+			//	ApplyConfigChanges();
+			//}
 		}
 
 		public static bool DebugMode
 		{
 			get { return Config != null && Config.DebugMode; }
 		}
-
-		public static ServiceMetadata Metadata { get { return Config.Metadata; } }
 
 		/// <summary>
 		/// Applies the raw request filters. Returns whether or not the request has been handled 
@@ -319,7 +304,7 @@ namespace SimpleStack
 //			using (Profiler.Current.Step("Executing Request Filters"))
 			{
 				//Exec all RequestFilter attributes with Priority < 0
-				var attributes = FilterAttributeCache.GetRequestFilterAttributes(requestDto.GetType());
+				var attributes = FilterAttributeCache.GetRequestFilterAttributes(requestDto.GetType(),AppHost.ServiceManager.Metadata);
 				var i = 0;
 				for (; i < attributes.Length && attributes[i].Priority < 0; i++)
 				{
@@ -367,7 +352,7 @@ namespace SimpleStack
 			{
 				var responseDto = response.ToResponseDto();
 				var attributes = responseDto != null
-					? FilterAttributeCache.GetResponseFilterAttributes(responseDto.GetType())
+					? FilterAttributeCache.GetResponseFilterAttributes(responseDto.GetType(), AppHost.ServiceManager.Metadata)
 					: null;
 
 				//Exec all ResponseFilter attributes with Priority < 0
@@ -414,7 +399,7 @@ namespace SimpleStack
 		{
 			//using (Profiler.Current.Step("Execute Service"))
 			{
-				return config.ServiceController.Execute(request,
+				return AppHost.ServiceManager.ServiceController.Execute(request,
 					new HttpRequestContext(httpReq, httpRes, request, endpointAttributes));
 			}
 		}

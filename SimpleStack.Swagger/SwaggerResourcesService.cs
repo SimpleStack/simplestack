@@ -58,7 +58,7 @@ namespace SimpleStack.Swagger
 				BasePath = basePath,
 				Apis = new List<RestService>()
 			};
-			var operations = EndpointHost.Metadata;
+			var operations = GetAppHost().ServiceManager.Metadata;
 			var allTypes = operations.GetAllTypes();
 			var allOperationNames = operations.GetAllOperationNames();
 			foreach (var operationName in allOperationNames)

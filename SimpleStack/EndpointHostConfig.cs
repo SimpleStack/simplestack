@@ -121,13 +121,6 @@ namespace SimpleStack
 			return i;
 		}
 
-		public EndpointHostConfig(string serviceName, ServiceManager serviceManager)
-			: this()
-		{
-			this.ServiceName = serviceName;
-			this.ServiceManager = serviceManager;
-		}
-
 		public EndpointHostConfig()
 		{
 			if (instance == null) return;
@@ -317,9 +310,11 @@ namespace SimpleStack
 		//	return string.Empty;
 		//}
 
-		public ServiceManager ServiceManager { get; internal set; }
-		public ServiceMetadata Metadata { get { return ServiceManager.Metadata; } }
-		public IServiceController ServiceController { get { return ServiceManager.ServiceController; } }
+		//[Obsolete("Use AppHost Service Manager instead")]
+		//public ServiceManager ServiceManager { get; internal set; }
+
+		//public ServiceMetadata Metadata { get { return ServiceManager.Metadata; } }
+		//public IServiceController ServiceController { get { return ServiceManager.ServiceController; } }
 
 		public MetadataTypesConfig MetadataTypesConfig { get; set; }
 		public string WsdlServiceNamespace { get; set; }
@@ -386,43 +381,43 @@ namespace SimpleStack
 
 		public bool UseHttpsLinks { get; set; }
 
-		public string DefaultOperationNamespace
-		{
-			get
-			{
-				if (this._defaultOperationNamespace == null)
-				{
-					this._defaultOperationNamespace = GetDefaultNamespace();
-				}
-				return this._defaultOperationNamespace;
-			}
-			set
-			{
-				this._defaultOperationNamespace = value;
-			}
-		}
+		//public string DefaultOperationNamespace
+		//{
+		//	get
+		//	{
+		//		if (this._defaultOperationNamespace == null)
+		//		{
+		//			this._defaultOperationNamespace = GetDefaultNamespace();
+		//		}
+		//		return this._defaultOperationNamespace;
+		//	}
+		//	set
+		//	{
+		//		this._defaultOperationNamespace = value;
+		//	}
+		//}
 
-		private string GetDefaultNamespace()
-		{
-			if (!String.IsNullOrEmpty(this._defaultOperationNamespace)
-				|| this.ServiceController == null) return null;
+		//private string GetDefaultNamespace()
+		//{
+		//	if (!String.IsNullOrEmpty(this._defaultOperationNamespace)
+		//		|| this.ServiceController == null) return null;
 
-			foreach (var operationType in this.Metadata.RequestTypes)
-			{
-				var attrs = operationType.GetCustomAttributes(
-					typeof(DataContractAttribute), false);
+		//	foreach (var operationType in this.Metadata.RequestTypes)
+		//	{
+		//		var attrs = operationType.GetCustomAttributes(
+		//			typeof(DataContractAttribute), false);
 
-				if (attrs.Length <= 0) continue;
+		//		if (attrs.Length <= 0) continue;
 
-				var attr = (DataContractAttribute)attrs[0];
+		//		var attr = (DataContractAttribute)attrs[0];
 
-				if (String.IsNullOrEmpty(attr.Namespace)) continue;
+		//		if (String.IsNullOrEmpty(attr.Namespace)) continue;
 
-				return attr.Namespace;
-			}
+		//		return attr.Namespace;
+		//	}
 
-			return null;
-		}
+		//	return null;
+		//}
 
 		public bool HasFeature(Feature feature)
 		{

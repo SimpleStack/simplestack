@@ -33,7 +33,7 @@ namespace SimpleStack.Tools
 			return to;
 		}
 
-		public static IHasRequestFilter[] GetRequestFilterAttributes(Type requestDtoType)
+		public static IHasRequestFilter[] GetRequestFilterAttributes(Type requestDtoType, ServiceMetadata metadata)
 		{
 			IHasRequestFilter[] attrs;
 			if (_requestFilterAttributes.TryGetValue(requestDtoType, out attrs)) return attrs.ShallowCopy();
@@ -41,7 +41,7 @@ namespace SimpleStack.Tools
 			var attributes = new List<IHasRequestFilter>(
 				(IHasRequestFilter[])requestDtoType.GetCustomAttributes(typeof(IHasRequestFilter), true));
 
-			var serviceType = EndpointHost.Metadata.GetServiceTypeByRequest(requestDtoType);
+			var serviceType = metadata.GetServiceTypeByRequest(requestDtoType);
 			attributes.AddRange(
 				(IHasRequestFilter[])serviceType.GetCustomAttributes(typeof(IHasRequestFilter), true));
 
@@ -61,7 +61,7 @@ namespace SimpleStack.Tools
 			return attrs.ShallowCopy();
 		}
 
-		public static IHasResponseFilter[] GetResponseFilterAttributes(Type responseDtoType)
+		public static IHasResponseFilter[] GetResponseFilterAttributes(Type responseDtoType, ServiceMetadata metadata)
 		{
 			IHasResponseFilter[] attrs;
 			if (_responseFilterAttributes.TryGetValue(responseDtoType, out attrs)) return attrs.ShallowCopy();
@@ -69,7 +69,7 @@ namespace SimpleStack.Tools
 			var attributes = new List<IHasResponseFilter>(
 				(IHasResponseFilter[])responseDtoType.GetCustomAttributes(typeof(IHasResponseFilter), true));
 
-			var serviceType = EndpointHost.Metadata.GetServiceTypeByResponse(responseDtoType);
+			var serviceType = metadata.GetServiceTypeByResponse(responseDtoType);
 			if (serviceType != null)
 			{
 				attributes.AddRange(

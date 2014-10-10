@@ -94,7 +94,7 @@ namespace SimpleStack
 			{
 				BeforeEachRequest(requestContext, request);
 
-				var container = AppHost.Config.ServiceManager.Container;
+				var container = AppHost.ServiceManager.Container;
 				var httpReq = requestContext != null ? requestContext.Get<IHttpRequest>() : null;
 				var httpRes = requestContext != null ? requestContext.Get<IHttpResponse>() : null;
 
