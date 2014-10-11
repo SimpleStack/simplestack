@@ -98,6 +98,8 @@ namespace SimpleStack
 
 			_initialized = true;
 
+			EndpointHost.ConfigureHost(this, "");
+
 			ServiceManager.Init();
 			Configure(ServiceManager.Container);
 			ServiceManager.AfterInit();
@@ -374,8 +376,8 @@ namespace SimpleStack
 
 					var operationName = context.Request.Uri.Segments[context.Request.Uri.Segments.Length - 1];
 
-					var httpReq = new OwinRequestWrapper(operationName, context.Request, _config.DefaultContentType);
-					var httpRes = new OwinResponseWrapper(context.Response);
+					var httpReq = new OwinRequestWrapper(this,operationName, context.Request, _config.DefaultContentType);
+					var httpRes = new OwinResponseWrapper(this,context.Response);
 
 					if (httpReq.PathInfo == null)
 						return false;

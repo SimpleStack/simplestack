@@ -10,8 +10,14 @@ namespace SimpleStack
 	{
 		private static readonly UTF8Encoding UTF8EncodingWithoutBom = new UTF8Encoding(false);
 
-		public HttpResponseStreamWrapper(Stream stream)
+		public HttpResponseStreamWrapper(IAppHost appHost, Stream stream)
 		{
+			if (appHost == null)
+				throw new ArgumentNullException("appHost");
+			if (stream == null)
+				throw new ArgumentNullException("stream");
+
+			AppHost = appHost;
 			this.OutputStream = stream;
 			this.Headers = new Dictionary<string, string>();
 		}
@@ -75,6 +81,7 @@ namespace SimpleStack
 		public bool IsClosed { get; private set; }
 
 		public void SetContentLength(long contentLength) {}
+		public IAppHost AppHost { get; private set; }
 	}
 }
 

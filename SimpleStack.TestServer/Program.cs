@@ -33,6 +33,8 @@ namespace SimpleStack.TestServer
 				SwaggerApiService.DisableAutoDtoInBodyParam = false;
 
 				base.Config.SimpleStackHandlerFactoryPath = "/api";
+
+				Config.DefaultContentType = ContentType.Json;
 			}
 
 			public override void Configure(Funq.Container container)

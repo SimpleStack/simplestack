@@ -315,7 +315,7 @@ namespace SimpleStack.Extensions
 				defaultContentType = defaultConfigContentType;
 			}
 
-			var availableContentTypes = EndpointHost.ContentTypeFilter.ContentTypeFormats.Values;
+			var availableContentTypes = httpReq.AppHost.ContentTypeFilters.ContentTypeFormats.Values;
 
 			var acceptsAnything = false;
 
@@ -374,7 +374,7 @@ namespace SimpleStack.Extensions
 
 			List<string> contentType;
 
-			EndpointHost.ContentTypeFilter.ContentTypeFormats.TryGetValue(format, out contentType);
+			httpReq.AppHost.ContentTypeFilters.ContentTypeFormats.TryGetValue(format, out contentType);
 
 			return contentType != null ? contentType[0] : null;
 		}

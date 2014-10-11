@@ -118,7 +118,7 @@ namespace SimpleStack.Extensions
 
 		public static EndpointAttributes GetAttributes(this IHttpRequest request)
 		{
-			if (EndpointHost.DebugMode
+			if (request.AppHost.Config.DebugMode
 			    && request.QueryString != null) { //Mock<IHttpRequest>
 				var simulate = request.QueryString ["simulate"];
 				if (simulate != null) {

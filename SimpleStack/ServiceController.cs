@@ -125,7 +125,7 @@ namespace SimpleStack
 					if (processedReqs.Contains(requestType)) continue;
 					processedReqs.Add(requestType);
 
-					RegisterNServiceExecutor(requestType, serviceType, serviceFactoryFn);
+					RegisterNServiceExecutor(_appHost, requestType, serviceType, serviceFactoryFn);
 
 					var returnMarker = requestType.GetTypeWithGenericTypeDefinitionOf(typeof(IReturn<>));
 					var responseType = returnMarker != null ?
@@ -315,7 +315,7 @@ namespace SimpleStack
 		//	AddToRequestExecMap(requestType, serviceType, handlerFn);
 		//}
 
-		public void RegisterNServiceExecutor(Type requestType, Type serviceType, ITypeFactory serviceFactoryFn)
+		public void RegisterNServiceExecutor(IAppHost appHost, Type requestType, Type serviceType, ITypeFactory serviceFactoryFn)
 		{
 			var serviceExecDef = typeof(NServiceRequestExec<,>).MakeGenericType(serviceType, requestType);
 			var iserviceExec = (INServiceExec)serviceExecDef.CreateInstance();
@@ -323,8 +323,7 @@ namespace SimpleStack
 			ServiceExecFn handlerFn = (requestContext, dto) => {
 				var service = serviceFactoryFn.CreateInstance(serviceType);
 
-				ServiceExecFn serviceExec = (reqCtx, req) =>
-					iserviceExec.Execute(reqCtx, service, req);
+				ServiceExecFn serviceExec = (reqCtx, req) => iserviceExec.Execute(reqCtx, service, req);
 
 				return ManagedServiceExec(serviceExec, service, requestContext, dto);
 			};

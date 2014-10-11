@@ -106,7 +106,7 @@ namespace SimpleStack
 			{
 				using (var ms = new MemoryStream())
 				{
-					var httpRes = new HttpResponseStreamWrapper(ms);
+					var httpRes = new HttpResponseStreamWrapper(requestContext.Get<IAppHost>(), ms);
 					responseWriter(requestContext, response, httpRes);
 					ms.Position = 0;
 					return ms.ToArray();
@@ -153,7 +153,7 @@ namespace SimpleStack
 			{
 				using (var ms = new MemoryStream())
 				{
-					var httpRes = new HttpResponseStreamWrapper(ms)
+					var httpRes = new HttpResponseStreamWrapper(requestContext.Get<IAppHost>(), ms)
 						{
 							KeepOpen = true, //Don't let view engines close the OutputStream
 						};
@@ -192,7 +192,7 @@ namespace SimpleStack
 			if (serializer == null)
 				throw new NotSupportedException("ContentType not supported: " + contentType);
 
-			var httpRes = new HttpResponseStreamWrapper(responseStream);
+			var httpRes = new HttpResponseStreamWrapper(requestContext.Get<IAppHost>(), responseStream);
 			serializer(requestContext, response, httpRes);
 		}
 

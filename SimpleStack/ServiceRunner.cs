@@ -22,7 +22,7 @@ namespace SimpleStack
 		protected readonly IHasRequestFilter[] RequestFilters;
 		protected readonly IHasResponseFilter[] ResponseFilters;
 
-		public ServiceRunner() { }
+		//public ServiceRunner() { }
 
 		public ServiceRunner(IAppHost appHost, ActionContext actionContext)
 		{

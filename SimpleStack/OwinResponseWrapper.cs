@@ -18,10 +18,15 @@ namespace SimpleStack
 		private IOwinResponse _response;
 		private bool _isClosed = false;
 
-		public OwinResponseWrapper(IOwinResponse response)
+		public OwinResponseWrapper(IAppHost appHost, IOwinResponse response)
 		{
+			if (appHost == null)
+				throw new ArgumentNullException("appHost");
 			if (response == null)
-				throw new ArgumentNullException ("response");
+				throw new ArgumentNullException("response");
+
+			AppHost = appHost;
+
 			this._response = response;
 		}
 
@@ -61,6 +66,8 @@ namespace SimpleStack
 		{
 			_response.ContentLength = contentLength;
 		}
+
+		public IAppHost AppHost { get; private set; }
 
 		public object OriginalResponse {
 			get {

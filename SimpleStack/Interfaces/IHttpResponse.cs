@@ -52,6 +52,8 @@ namespace SimpleStack.Interfaces
 		bool IsClosed { get; }
 
 		void SetContentLength(long contentLength);
+
+		IAppHost AppHost { get; }
 	}
 }
 

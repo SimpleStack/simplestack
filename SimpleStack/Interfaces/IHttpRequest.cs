@@ -103,6 +103,8 @@ namespace SimpleStack.Interfaces
 		IFile[] Files { get; }
 
 		string ApplicationFilePath { get; }
+
+		IAppHost AppHost { get; }
 	}
 }
 

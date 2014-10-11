@@ -41,10 +41,17 @@ namespace SimpleStack
 		}
 
 		public OwinRequestWrapper(
+			IAppHost appHost,
 			string operationName,
 			IOwinRequest request,
 			string defaultContentType)
 		{
+			if (appHost == null)
+				throw new ArgumentNullException("appHost");
+			if (request == null)
+				throw new ArgumentNullException("request");
+
+			AppHost = appHost;
 			OperationName = operationName;
 			DefaultContentType = defaultContentType;
 			this.request = request;
@@ -313,6 +320,8 @@ namespace SimpleStack
 		{
 			get { return physicalFilePath; }
 		}
+
+		public IAppHost AppHost { get; private set; }
 
 		public IFile[] Files
 		{

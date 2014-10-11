@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using SimpleStack.Logging;
 using SimpleStack.Interfaces;
 using System.IO;
@@ -52,7 +53,7 @@ namespace SimpleStack.Extensions
 
 		public static bool WriteToResponse(this IHttpResponse httpRes,EndpointHostConfig config, object result, string contentType)
 		{
-			var serializer = EndpointHost.AppHost.ContentTypeFilters.GetResponseSerializer(contentType);
+			var serializer = httpRes.AppHost.ContentTypeFilters.GetResponseSerializer(contentType);
 			return httpRes.WriteToResponse(config, result, serializer, new SerializationContext(contentType));
 		}
 
@@ -79,11 +80,11 @@ namespace SimpleStack.Extensions
 				//}
 				httpResult.RequestContext = serializationContext;
 				serializationContext.ResponseContentType = httpResult.ContentType ?? httpReq.ResponseContentType;
-				var httpResSerializer = EndpointHost.AppHost.ContentTypeFilters.GetResponseSerializer(serializationContext.ResponseContentType);
+				var httpResSerializer = httpReq.AppHost.ContentTypeFilters.GetResponseSerializer(serializationContext.ResponseContentType);
 				return httpRes.WriteToResponse(config, httpResult, httpResSerializer, serializationContext, bodyPrefix, bodySuffix);
 			}
 
-			var serializer = EndpointHost.AppHost.ContentTypeFilters.GetResponseSerializer(httpReq.ResponseContentType);
+			var serializer = httpReq.AppHost.ContentTypeFilters.GetResponseSerializer(httpReq.ResponseContentType);
 			return httpRes.WriteToResponse(config, result, serializer, serializationContext, bodyPrefix, bodySuffix);
 		}
 
@@ -287,14 +288,14 @@ namespace SimpleStack.Extensions
 		public static void WriteErrorToResponse(this IHttpResponse httpRes, IHttpRequest httpReq,
 			string contentType, string operationName, string errorMessage, Exception ex, int statusCode)
 		{
-			var errorDto = ex.ToErrorResponse();
+			var errorDto = ex.ToErrorResponse(httpReq.AppHost.Config.DebugMode);
 			if (HandleCustomErrorHandler(httpRes, httpReq, contentType, statusCode, errorDto)) return;
 
 			if (httpRes.ContentType == null || httpRes.ContentType == ContentType.Html)
 			{
 				httpRes.ContentType = contentType;
 			}
-			if (EndpointHost.Config.AppendUtf8CharsetOnContentTypes.Contains(contentType))
+			if (httpReq.AppHost.Config.AppendUtf8CharsetOnContentTypes.Contains(contentType))
 			{
 				httpRes.ContentType += ContentType.Utf8Suffix;
 			}
@@ -302,7 +303,7 @@ namespace SimpleStack.Extensions
 			httpRes.StatusCode = statusCode;
 			var serializationCtx = new SerializationContext(contentType);
 
-			var serializer = EndpointHost.AppHost.ContentTypeFilters.GetResponseSerializer(contentType);
+			var serializer = httpReq.AppHost.ContentTypeFilters.GetResponseSerializer(contentType);
 			if (serializer != null)
 			{
 				serializer(serializationCtx, errorDto, httpRes);
@@ -316,7 +317,7 @@ namespace SimpleStack.Extensions
 		{
 			if (httpReq != null && ContentType.Html.MatchesContentType(contentType))
 			{
-				var errorHandler = EndpointHost.Config.GetCustomErrorHandler(statusCode);
+				var errorHandler = httpReq.AppHost.Config.GetCustomErrorHandler(statusCode);
 				if (errorHandler != null)
 				{
 					httpReq.Items["Model"] = errorDto;
@@ -327,13 +328,13 @@ namespace SimpleStack.Extensions
 			return false;
 		}
 
-		private static ErrorResponse ToErrorResponse(this Exception ex)
+		private static ErrorResponse ToErrorResponse(this Exception ex, bool isDebugMode)
 		{
 			var dto = new ErrorResponse {
 				ResponseStatus = new ResponseStatus {
 					ErrorCode = ex.ToErrorCode(),
 					Message = ex.Message,
-					StackTrace = EndpointHost.DebugMode ? ex.StackTrace : null,
+					StackTrace = isDebugMode ? ex.StackTrace : null,
 				}
 			};
 			return dto;
@@ -359,9 +360,7 @@ namespace SimpleStack.Extensions
 
 		public static void ApplyGlobalResponseHeaders(this IHttpResponse httpRes)
 		{
-			if (EndpointHost.Config == null) 
-				return;
-			foreach (var globalResponseHeader in EndpointHost.Config.GlobalResponseHeaders)
+			foreach (var globalResponseHeader in httpRes.AppHost.Config.GlobalResponseHeaders)
 			{
 				httpRes.AddHeader(globalResponseHeader.Key, globalResponseHeader.Value);
 			}
@@ -380,17 +379,17 @@ namespace SimpleStack.Extensions
 			EndpointHost.CompleteRequest();
 		}
 
-//		public static void EndHttpRequest(this HttpResponse httpRes, bool skipHeaders = false, bool skipClose = false, bool closeOutputStream = false, Action<HttpResponse> afterBody = null)
-//		{
-//			if (!skipHeaders) httpRes.ApplyGlobalResponseHeaders();
-//			if (afterBody != null) afterBody(httpRes);
-//			if (closeOutputStream) httpRes.CloseOutputStream();
-//			else if (!skipClose) httpRes.Close();
-//
-//			//skipHeaders used when Apache+mod_mono doesn't like:
-//			//response.OutputStream.Flush();
-//			//response.Close();
-//		}
+		//public static void EndHttpRequest(this HttpResponse httpRes, bool skipHeaders = false, bool skipClose = false, bool closeOutputStream = false, Action<HttpResponse> afterBody = null)
+		//{
+		//	if (!skipHeaders) httpRes.ApplyGlobalResponseHeaders();
+		//	if (afterBody != null) afterBody(httpRes);
+		//	if (closeOutputStream) httpRes.CloseOutputStream();
+		//	else if (!skipClose) httpRes.Close();
+
+		//	//skipHeaders used when Apache+mod_mono doesn't like:
+		//	//response.OutputStream.Flush();
+		//	//response.Close();
+		//}
 
 		public static void EndHttpRequest(this IHttpResponse httpRes, bool skipHeaders = false, bool skipClose = false, Action<IHttpResponse> afterBody = null)
 		{

@@ -20,35 +20,35 @@ namespace SimpleStack
 
 	public class EndpointHost
 	{
-		public static IAppHost AppHost { get; internal set; }
+		private static IAppHost AppHost { get; set; }
 
-		public static IContentTypeFilter ContentTypeFilter { get; private set; }
+		//[Obsolete]
+		//public static IContentTypeFilter ContentTypeFilter { get; private set; }
 
-		public static List<Action<IHttpRequest, IHttpResponse>> RawRequestFilters { get; private set; }
-
-		public static List<Action<IHttpRequest, IHttpResponse, object>> RequestFilters { get; private set; }
-
-		public static List<Action<IHttpRequest, IHttpResponse, object>> ResponseFilters { get; private set; }
+		//These 3 ^properties should be availble 
+		private static List<Action<IHttpRequest, IHttpResponse>> RawRequestFilters { get; set; }
+		private static List<Action<IHttpRequest, IHttpResponse, object>> RequestFilters { get;  set; }
+		private static List<Action<IHttpRequest, IHttpResponse, object>> ResponseFilters { get;  set; }
 		//
 		//        public static List<IViewEngine> ViewEngines { get; set; }
 
-		public static HandleUncaughtExceptionDelegate ExceptionHandler { get; set; }
+		private static HandleUncaughtExceptionDelegate ExceptionHandler { get; set; }
 
-		public static HandleServiceExceptionDelegate ServiceExceptionHandler { get; set; }
+		private static HandleServiceExceptionDelegate ServiceExceptionHandler { get; set; }
 
-		public static List<HttpHandlerResolverDelegate> CatchAllHandlers { get; set; }
+		private static List<HttpHandlerResolverDelegate> CatchAllHandlers { get; set; }
 
 		//public static List<IPlugin> Plugins { get; set; }
 
 		//public static IVirtualPathProvider VirtualPathProvider { get; set; }
 
-		public static DateTime StartedAt { get; set; }
+		private static DateTime StartedAt { get; set; }
 
-		public static DateTime ReadyAt { get; set; }
+		private static DateTime ReadyAt { get; set; }
 
 		private static void Reset()
 		{
-			ContentTypeFilter = HttpResponseFilter.Instance;
+			//ContentTypeFilter = HttpResponseFilter.Instance;
 			RawRequestFilters = new List<Action<IHttpRequest, IHttpResponse>>();
 			RequestFilters = new List<Action<IHttpRequest, IHttpResponse, object>>();
 			ResponseFilters = new List<Action<IHttpRequest, IHttpResponse, object>>();
@@ -69,7 +69,7 @@ namespace SimpleStack
 		}
 
 		// Pre user config
-		public static void ConfigureHost(IAppHost appHost, string serviceName, ServiceManager serviceManager)
+		public static void ConfigureHost(IAppHost appHost, string serviceName/*, ServiceManager serviceManager*/)
 		{
 			Reset();
 			AppHost = appHost;
@@ -266,10 +266,10 @@ namespace SimpleStack
 			//}
 		}
 
-		public static bool DebugMode
-		{
-			get { return Config != null && Config.DebugMode; }
-		}
+		//public static bool DebugMode
+		//{
+		//	get { return Config != null && Config.DebugMode; }
+		//}
 
 		/// <summary>
 		/// Applies the raw request filters. Returns whether or not the request has been handled 
@@ -408,7 +408,7 @@ namespace SimpleStack
 		{
 			return AppHost != null
 				? AppHost.CreateServiceRunner<TRequest>(actionContext)
-					: new ServiceRunner<TRequest>(null, actionContext);
+					: new ServiceRunner<TRequest>(AppHost, actionContext);
 		}
 
 		/// <summary>
