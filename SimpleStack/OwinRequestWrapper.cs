@@ -202,11 +202,11 @@ namespace SimpleStack
 				{
 					pathInfo = request.Path.HasValue ? request.Path.Value : String.Empty;
 
-					if (!String.IsNullOrEmpty(EndpointHostConfig.Instance.SimpleStackHandlerFactoryPath))
+					if (!String.IsNullOrEmpty(AppHost.Config.SimpleStackHandlerFactoryPath))
 					{
-						if (pathInfo.StartsWith(EndpointHostConfig.Instance.SimpleStackHandlerFactoryPath))
+						if (pathInfo.StartsWith(AppHost.Config.SimpleStackHandlerFactoryPath))
 						{
-							pathInfo = pathInfo.Substring(EndpointHostConfig.Instance.SimpleStackHandlerFactoryPath.Length);
+							pathInfo = pathInfo.Substring(AppHost.Config.SimpleStackHandlerFactoryPath.Length);
 						}
 						else
 						{

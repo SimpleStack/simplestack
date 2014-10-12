@@ -155,7 +155,7 @@ namespace SimpleStack.Extensions
 //				: EndpointHostConfig.Instance.WebHostPhysicalPath.CombineWith(httpReq.PathInfo);
 //
 //			return res;
-			return EndpointHostConfig.Instance.WebHostPhysicalPath.CombineWith(httpReq.PathInfo);
+			return httpReq.AppHost.Config.WebHostPhysicalPath.CombineWith(httpReq.PathInfo);
 		}
 
 //		public static string GetApplicationUrl(this HttpRequest httpReq)

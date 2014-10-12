@@ -45,7 +45,7 @@ namespace SimpleStack
 		protected AppHostBase(string serviceName, params Assembly[] assembliesWithServices)
 		{
 			ServiceManager = CreateServiceManager(assembliesWithServices);
-			_config = EndpointHostConfig.CreateNew();
+			_config = new EndpointHostConfig();
 			_config.DebugMode = GetType().Assembly.IsDebugBuild();
 			_config.ServiceName = serviceName;
 
@@ -401,8 +401,8 @@ namespace SimpleStack
 
 					var operationName = context.Request.Uri.Segments[context.Request.Uri.Segments.Length - 1];
 
-					var httpReq = new OwinRequestWrapper(this,operationName, context.Request, _config.DefaultContentType);
-					var httpRes = new OwinResponseWrapper(this,context.Response);
+					var httpReq = new OwinRequestWrapper(this, operationName, context.Request, _config.DefaultContentType);
+					var httpRes = new OwinResponseWrapper(this, context.Response);
 
 					if (httpReq.PathInfo == null)
 						return false;
@@ -422,7 +422,6 @@ namespace SimpleStack
 
 					return false;
 				});
-			//throw new NotImplementedException("Cannot execute handler: " + simpleStackHttpHandler + " at PathInfo: " + httpReq.PathInfo);
 		}
 
 		private ISimpleStackHttpHandler ProcessPredefinedRoutesRequest(string httpMethod, string pathInfo, string filePath)

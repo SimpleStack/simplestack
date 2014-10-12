@@ -33,52 +33,39 @@ namespace SimpleStack
 
 		public static string ServiceStackPath = null;
 
-		private static EndpointHostConfig instance;
-		public static EndpointHostConfig Instance
+		public EndpointHostConfig()
 		{
-			get
-			{
-				if (instance == null)
-				{
-					instance = CreateNew();
-				}
-				return instance;
-			}
-		}
 
-		public static EndpointHostConfig CreateNew()
-		{
-			var i = new EndpointHostConfig
-			{
-				MetadataTypesConfig = new MetadataTypesConfig(addDefaultXmlNamespace: "http://schemas.simplestack.org/types"),
-				WsdlServiceNamespace = "http://schemas.simplestack.org/types",
-				WsdlSoapActionNamespace = "http://schemas.simplestack.org/types",
-				MetadataPageBodyHtml = @"<br />
-                            <h3><a href=""https://github.com/ServiceStack/ServiceStack/wiki/Clients-overview"">Clients Overview</a></h3>",
-				MetadataOperationPageBodyHtml = @"<br />
-                            <h3><a href=""https://github.com/ServiceStack/ServiceStack/wiki/Clients-overview"">Clients Overview</a></h3>",
+			MetadataTypesConfig = new MetadataTypesConfig(addDefaultXmlNamespace: "http://schemas.simplestack.org/types");
+			WsdlServiceNamespace = "http://schemas.simplestack.org/types";
+			WsdlSoapActionNamespace = "http://schemas.simplestack.org/types";
+			MetadataPageBodyHtml = @"<br />
+                            <h3><a href=""https://github.com/ServiceStack/ServiceStack/wiki/Clients-overview"">Clients Overview</a></h3>";
+			MetadataOperationPageBodyHtml = @"<br />
+                            <h3><a href=""https://github.com/ServiceStack/ServiceStack/wiki/Clients-overview"">Clients Overview</a></h3>";
 				//						LogFactory = null,// new NullLogFactory(),
-				EnableAccessRestrictions = true,
-				WebHostPhysicalPath = "~".MapServerPath(),
-				SimpleStackHandlerFactoryPath = ServiceStackPath,
-				MetadataRedirectPath = null,
-				DefaultContentType = null,
-				AllowJsonpRequests = true,
-				AllowNonHttpOnlyCookies = false,
-				UseHttpsLinks = false,
-				DebugMode = typeof(EndpointHostConfig).Assembly.IsDebugBuild(),
-				DefaultDocuments = new List<string> {
-							"default.htm",
-							"default.html",
-							"default.cshtml",
-							"default.md",
-							"index.htm",
-							"index.html",
-							"default.aspx",
-							"default.ashx",
-						},
-				GlobalResponseHeaders = new Dictionary<string, string> { { "X-Powered-By", Env.ServerUserAgent } },
-				IgnoreFormatsInMetadata = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase),
+			EnableAccessRestrictions = true;
+			WebHostPhysicalPath = "~".MapServerPath();
+			SimpleStackHandlerFactoryPath = ServiceStackPath;
+			MetadataRedirectPath = null;
+			DefaultContentType = null;
+			AllowJsonpRequests = true;
+			AllowNonHttpOnlyCookies = false;
+			UseHttpsLinks = false;
+			DebugMode = typeof (EndpointHostConfig).Assembly.IsDebugBuild();
+			DefaultDocuments = new List<string>
+				{
+					"default.htm",
+					"default.html",
+					"default.cshtml",
+					"default.md",
+					"index.htm",
+					"index.html",
+					"default.aspx",
+					"default.ashx",
+				};
+			GlobalResponseHeaders = new Dictionary<string, string> {{"X-Powered-By", Env.ServerUserAgent}};
+			IgnoreFormatsInMetadata = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
 				//AllowFileExtensions = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
 				//{
 				//	"js", "css", "htm", "html", "shtm", "txt", "xml", "rss", "csv", 
@@ -86,88 +73,38 @@ namespace SimpleStack
 				//	"avi", "divx", "m3u", "mov", "mp3", "mpeg", "mpg", "qt", "vob", "wav", "wma", "wmv", 
 				//	"flv", "xap", "xaml", "ogg", "mp4", "webm", 
 				//},
-				DebugAspNetHostEnvironment = Env.IsMono ? "FastCGI" : "IIS7",
-				DebugHttpListenerHostEnvironment = Env.IsMono ? "XSP" : "WebServer20",
-				EnableFeatures = Feature.All,
-				WriteErrorsToResponse = true,
-				ReturnsInnerException = true,
+			DebugAspNetHostEnvironment = Env.IsMono ? "FastCGI" : "IIS7";
+			DebugHttpListenerHostEnvironment = Env.IsMono ? "XSP" : "WebServer20";
+			EnableFeatures = Feature.All;
+			WriteErrorsToResponse = true;
+			ReturnsInnerException = true;
 				//						MarkdownOptions = new MarkdownOptions(),
 				//						MarkdownBaseType = typeof(MarkdownViewBase),
 				//						MarkdownGlobalHelpers = new Dictionary<string, Type>(),
-				HtmlReplaceTokens = new Dictionary<string, string>(),
-				AddMaxAgeForStaticMimeTypes = new Dictionary<string, TimeSpan> {
-							{ "image/gif", TimeSpan.FromHours(1) },
-							{ "image/png", TimeSpan.FromHours(1) },
-							{ "image/jpeg", TimeSpan.FromHours(1) },
-						},
-				AppendUtf8CharsetOnContentTypes = new HashSet<string> { ContentType.Json, },
-				RawHttpHandlers = new List<Func<IHttpRequest, ISimpleStackHttpHandler>>(),
-				RouteNamingConventions = new List<RouteNamingConventionDelegate> {
-							RouteNamingConvention.WithRequestDtoName,
-							RouteNamingConvention.WithMatchingAttributes,
-							RouteNamingConvention.WithMatchingPropertyNames
-						},
-				CustomHttpHandlers = new Dictionary<HttpStatusCode, ISimpleStackHttpHandler>(),
-				GlobalHtmlErrorHttpHandler = null,
+			HtmlReplaceTokens = new Dictionary<string, string>();
+			AddMaxAgeForStaticMimeTypes = new Dictionary<string, TimeSpan>
+				{
+					{"image/gif", TimeSpan.FromHours(1)},
+					{"image/png", TimeSpan.FromHours(1)},
+					{"image/jpeg", TimeSpan.FromHours(1)},
+				};
+			AppendUtf8CharsetOnContentTypes = new HashSet<string> {ContentType.Json,};
+			RawHttpHandlers = new List<Func<IHttpRequest, ISimpleStackHttpHandler>>();
+			RouteNamingConventions = new List<RouteNamingConventionDelegate>
+				{
+					RouteNamingConvention.WithRequestDtoName,
+					RouteNamingConvention.WithMatchingAttributes,
+					RouteNamingConvention.WithMatchingPropertyNames
+				};
+			CustomHttpHandlers = new Dictionary<HttpStatusCode, ISimpleStackHttpHandler>();
+			GlobalHtmlErrorHttpHandler = null;
 //				MapExceptionToStatusCode = new Dictionary<Type, int>(),
-				OnlySendSessionCookiesSecurely = false,
-				RestrictAllCookiesToDomain = null,
-				DefaultJsonpCacheExpiration = new TimeSpan(0, 20, 0),
-				MetadataVisibility = EndpointAttributes.Any,
-				Return204NoContentForEmptyResponse = true,
-				AllowPartialResponses = true,
-			};
-
-			return i;
-		}
-
-		public EndpointHostConfig()
-		{
-			if (instance == null) return;
-
-			//Get a copy of the singleton already partially configured
-			this.MetadataTypesConfig = instance.MetadataTypesConfig;
-			this.WsdlServiceNamespace = instance.WsdlServiceNamespace;
-			this.WsdlSoapActionNamespace = instance.WsdlSoapActionNamespace;
-			this.MetadataPageBodyHtml = instance.MetadataPageBodyHtml;
-			this.MetadataOperationPageBodyHtml = instance.MetadataOperationPageBodyHtml;
-			this.EnableAccessRestrictions = instance.EnableAccessRestrictions;
-			this.ServiceEndpointsMetadataConfig = instance.ServiceEndpointsMetadataConfig;
-//			this.LogFactory = instance.LogFactory;
-			this.EnableAccessRestrictions = instance.EnableAccessRestrictions;
-			this.WebHostUrl = instance.WebHostUrl;
-			this.WebHostPhysicalPath = instance.WebHostPhysicalPath;
-			this.DefaultRedirectPath = instance.DefaultRedirectPath;
-			this.MetadataRedirectPath = instance.MetadataRedirectPath;
-			this.SimpleStackHandlerFactoryPath = instance.SimpleStackHandlerFactoryPath;
-			this.DefaultContentType = instance.DefaultContentType;
-			this.AllowJsonpRequests = instance.AllowJsonpRequests;
-			this.DebugMode = instance.DebugMode;
-			this.DefaultDocuments = instance.DefaultDocuments;
-			this.GlobalResponseHeaders = instance.GlobalResponseHeaders;
-			this.IgnoreFormatsInMetadata = instance.IgnoreFormatsInMetadata;
-			//this.AllowFileExtensions = instance.AllowFileExtensions;
-			this.EnableFeatures = instance.EnableFeatures;
-			this.WriteErrorsToResponse = instance.WriteErrorsToResponse;
-			this.ReturnsInnerException = instance.ReturnsInnerException;
-//			this.MarkdownOptions = instance.MarkdownOptions;
-//			this.MarkdownBaseType = instance.MarkdownBaseType;
-//			this.MarkdownGlobalHelpers = instance.MarkdownGlobalHelpers;
-			this.HtmlReplaceTokens = instance.HtmlReplaceTokens;
-			this.AddMaxAgeForStaticMimeTypes = instance.AddMaxAgeForStaticMimeTypes;
-			this.AppendUtf8CharsetOnContentTypes = instance.AppendUtf8CharsetOnContentTypes;
-			this.RawHttpHandlers = instance.RawHttpHandlers;
-			this.RouteNamingConventions = instance.RouteNamingConventions;
-			this.CustomHttpHandlers = instance.CustomHttpHandlers;
-			this.GlobalHtmlErrorHttpHandler = instance.GlobalHtmlErrorHttpHandler;
-//			this.MapExceptionToStatusCode = instance.MapExceptionToStatusCode;
-			this.OnlySendSessionCookiesSecurely = instance.OnlySendSessionCookiesSecurely;
-			this.RestrictAllCookiesToDomain = instance.RestrictAllCookiesToDomain;
-			this.DefaultJsonpCacheExpiration = instance.DefaultJsonpCacheExpiration;
-			this.MetadataVisibility = instance.MetadataVisibility;
-			this.Return204NoContentForEmptyResponse = Return204NoContentForEmptyResponse;
-			this.AllowNonHttpOnlyCookies = instance.AllowNonHttpOnlyCookies;
-			this.AllowPartialResponses = instance.AllowPartialResponses;
+			OnlySendSessionCookiesSecurely = false;
+			RestrictAllCookiesToDomain = null;
+			DefaultJsonpCacheExpiration = new TimeSpan(0, 20, 0);
+			MetadataVisibility = EndpointAttributes.Any;
+			Return204NoContentForEmptyResponse = true;
+			AllowPartialResponses = true;
 		}
 
 		//public static string GetAppConfigPath()
@@ -201,35 +138,35 @@ namespace SimpleStack
 			return null;
 		}
 
-		private static void InferHttpHandlerPath()
-		{
-			try
-			{
-				var config = GetAppConfig();
-				if (config == null) return;
+		//private static void InferHttpHandlerPath()
+		//{
+		//	try
+		//	{
+		//		var config = GetAppConfig();
+		//		if (config == null) return;
 
-				//	SetPathsFromConfiguration(config, null);
+		//		//	SetPathsFromConfiguration(config, null);
 
-				if (instance.MetadataRedirectPath == null)
-				{
-					foreach (ConfigurationLocation location in config.Locations)
-					{
-						//		SetPathsFromConfiguration(location.OpenConfiguration(), (location.Path ?? "").ToLower());
+		//		if (instance.MetadataRedirectPath == null)
+		//		{
+		//			foreach (ConfigurationLocation location in config.Locations)
+		//			{
+		//				//		SetPathsFromConfiguration(location.OpenConfiguration(), (location.Path ?? "").ToLower());
 
-						if (instance.MetadataRedirectPath != null) { break; }
-					}
-				}
+		//				if (instance.MetadataRedirectPath != null) { break; }
+		//			}
+		//		}
 
-				if (!SkipPathValidation && instance.MetadataRedirectPath == null)
-				{
-					throw new ConfigurationErrorsException(
-						"Unable to infer ServiceStack's <httpHandler.Path/> from the Web.Config\n"
-						+ "Check with http://www.simplestack.org/ServiceStack.Hello/ to ensure you have configured ServiceStack properly.\n"
-						+ "Otherwise you can explicitly set your httpHandler.Path by setting: EndpointHostConfig.ServiceStackPath");
-				}
-			}
-			catch (Exception) { }
-		}
+		//		if (!SkipPathValidation && instance.MetadataRedirectPath == null)
+		//		{
+		//			throw new ConfigurationErrorsException(
+		//				"Unable to infer ServiceStack's <httpHandler.Path/> from the Web.Config\n"
+		//				+ "Check with http://www.simplestack.org/ServiceStack.Hello/ to ensure you have configured ServiceStack properly.\n"
+		//				+ "Otherwise you can explicitly set your httpHandler.Path by setting: EndpointHostConfig.ServiceStackPath");
+		//		}
+		//	}
+		//	catch (Exception) { }
+		//}
 
 //		private static void SetPathsFromConfiguration(System.Configuration.Configuration config, string locationPath)
 //		{
