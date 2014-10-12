@@ -13,32 +13,41 @@ using System.Text;
 using SimpleStack.Extensions;
 using System.Threading.Tasks;
 using SimpleStack.Handlers;
+using SimpleStack.Tools;
 
 namespace SimpleStack
 {
+	public delegate ISimpleStackHttpHandler HttpHandlerResolverDelegate(string httpMethod, string pathInfo, string filePath);
+
+	public delegate bool StreamSerializerResolverDelegate(IRequestContext requestContext, object dto, IHttpResponse httpRes);
+
+	public delegate void HandleUncaughtExceptionDelegate(IHttpRequest httpReq, IHttpResponse httpRes, string operationName, Exception ex);
+
+	public delegate object HandleServiceExceptionDelegate(IHttpRequest httpReq, object request, Exception ex);
+
 	public abstract class AppHostBase
 		: IFunqlet, IDisposable, IAppHost, IHasContainer
 	{
 		private static readonly ILog Log = Logger.CreateLog();
 
 		private bool _initialized = false;
-
-		private IContentTypeFilter _contentTypeFilter;
 		private EndpointHostConfig _config;
-		private SimpleStackHttpHandlerFactory _simpleStackHttpHandlerFactory;
-
-		private List<Action<IHttpRequest, IHttpResponse>> _rawRequestFilters;
-		private List<Action<IHttpRequest, IHttpResponse, object>> _requestFilter;
-		private List<Action<IHttpRequest, IHttpResponse, object>> _responseFilters;
 		private HandleUncaughtExceptionDelegate _exceptionHandler;
 		private HandleServiceExceptionDelegate _serviceExceptionHandler;
-		private List<HttpHandlerResolverDelegate> _catchAllHandlers;
+
+		private readonly IContentTypeFilter _contentTypeFilter;
+		private readonly SimpleStackHttpHandlerFactory _simpleStackHttpHandlerFactory;
+		private readonly List<Action<IHttpRequest, IHttpResponse>> _rawRequestFilters;
+		private readonly List<Action<IHttpRequest, IHttpResponse, object>> _requestFilter;
+		private readonly List<Action<IHttpRequest, IHttpResponse, object>> _responseFilters;
+		private readonly List<HttpHandlerResolverDelegate> _catchAllHandlers;
 
 		protected AppHostBase(string serviceName, params Assembly[] assembliesWithServices)
 		{
 			ServiceManager = CreateServiceManager(assembliesWithServices);
 			_config = EndpointHostConfig.CreateNew();
 			_config.DebugMode = GetType().Assembly.IsDebugBuild();
+			_config.ServiceName = serviceName;
 
 			_contentTypeFilter = new HttpResponseFilter();
 
@@ -98,8 +107,6 @@ namespace SimpleStack
 
 			_initialized = true;
 
-			EndpointHost.ConfigureHost(this, "");
-
 			ServiceManager.Init();
 			Configure(ServiceManager.Container);
 			ServiceManager.AfterInit();
@@ -115,6 +122,24 @@ namespace SimpleStack
 				{
 					Container.Register<ICacheClient>(new MemoryCacheClient());
 				}
+			}
+
+			if (Config.EnableFeatures != Feature.All)
+			{
+				if ((Feature.Xml & Config.EnableFeatures) != Feature.Xml)
+					Config.IgnoreFormatsInMetadata.Add("xml");
+				if ((Feature.Json & Config.EnableFeatures) != Feature.Json)
+					Config.IgnoreFormatsInMetadata.Add("json");
+				if ((Feature.Jsv & Config.EnableFeatures) != Feature.Jsv)
+					Config.IgnoreFormatsInMetadata.Add("jsv");
+				if ((Feature.Csv & Config.EnableFeatures) != Feature.Csv)
+					Config.IgnoreFormatsInMetadata.Add("csv");
+				if ((Feature.Html & Config.EnableFeatures) != Feature.Html)
+					Config.IgnoreFormatsInMetadata.Add("html");
+				if ((Feature.Soap11 & Config.EnableFeatures) != Feature.Soap11)
+					Config.IgnoreFormatsInMetadata.Add("soap11");
+				if ((Feature.Soap12 & Config.EnableFeatures) != Feature.Soap12)
+					Config.IgnoreFormatsInMetadata.Add("soap12");
 			}
 
 			//EndpointHost.AfterInit();
@@ -442,6 +467,127 @@ namespace SimpleStack
 			}
 
 			return null;
+		}
+
+		/// <summary>
+		/// Applies the raw request filters. Returns whether or not the request has been handled 
+		/// and no more processing should be done.
+		/// </summary>
+		/// <returns></returns>
+		public bool ApplyPreRequestFilters(IHttpRequest httpReq, IHttpResponse httpRes)
+		{
+			foreach (var requestFilter in PreRequestFilters)
+			{
+				requestFilter(httpReq, httpRes);
+				if (httpRes.IsClosed)
+					break;
+			}
+
+			return httpRes.IsClosed;
+		}
+
+		/// <summary>
+		/// Applies the request filters. Returns whether or not the request has been handled 
+		/// and no more processing should be done.
+		/// </summary>
+		/// <returns></returns>
+		public bool ApplyRequestFilters(IHttpRequest httpReq, IHttpResponse httpRes, object requestDto)
+		{
+			if (httpRes == null)
+				throw new ArgumentNullException("httpRes");
+			if (httpReq == null)
+				throw new ArgumentNullException("httpReq");
+			//			httpReq.ThrowIfNull("httpReq");
+			//			httpRes.ThrowIfNull("httpRes");
+
+			//			using (Profiler.Current.Step("Executing Request Filters"))
+			{
+				//Exec all RequestFilter attributes with Priority < 0
+				var attributes = FilterAttributeCache.GetRequestFilterAttributes(requestDto.GetType(), ServiceManager.Metadata);
+				var i = 0;
+				for (; i < attributes.Length && attributes[i].Priority < 0; i++)
+				{
+					var attribute = attributes[i];
+					ServiceManager.Container.AutoWire(attribute);
+					attribute.RequestFilter(httpReq, httpRes, requestDto);
+					Release(attribute);
+					if (httpRes.IsClosed) return httpRes.IsClosed;
+				}
+
+				//Exec global filters
+				foreach (var requestFilter in RequestFilters)
+				{
+					requestFilter(httpReq, httpRes, requestDto);
+					if (httpRes.IsClosed) return httpRes.IsClosed;
+				}
+
+				//Exec remaining RequestFilter attributes with Priority >= 0
+				for (; i < attributes.Length; i++)
+				{
+					var attribute = attributes[i];
+					ServiceManager.Container.AutoWire(attribute);
+					attribute.RequestFilter(httpReq, httpRes, requestDto);
+					Release(attribute);
+					if (httpRes.IsClosed) return httpRes.IsClosed;
+				}
+
+				return httpRes.IsClosed;
+			}
+		}
+
+		/// <summary>
+		/// Applies the response filters. Returns whether or not the request has been handled 
+		/// and no more processing should be done.
+		/// </summary>
+		/// <returns></returns>
+		public bool ApplyResponseFilters(IHttpRequest httpReq, IHttpResponse httpRes, object response)
+		{
+			httpReq.ThrowIfNull("httpReq");
+			httpRes.ThrowIfNull("httpRes");
+
+			//using (Profiler.Current.Step("Executing Response Filters"))
+			{
+				var responseDto = response.ToResponseDto();
+				var attributes = responseDto != null
+					? FilterAttributeCache.GetResponseFilterAttributes(responseDto.GetType(), ServiceManager.Metadata)
+					: null;
+
+				//Exec all ResponseFilter attributes with Priority < 0
+				var i = 0;
+				if (attributes != null)
+				{
+					for (; i < attributes.Length && attributes[i].Priority < 0; i++)
+					{
+						var attribute = attributes[i];
+						ServiceManager.Container.AutoWire(attribute);
+						attribute.ResponseFilter(httpReq, httpRes, response);
+						Release(attribute);
+						if (httpRes.IsClosed) return httpRes.IsClosed;
+					}
+				}
+
+				//Exec global filters
+				foreach (var responseFilter in ResponseFilters)
+				{
+					responseFilter(httpReq, httpRes, response);
+					if (httpRes.IsClosed) return httpRes.IsClosed;
+				}
+
+				//Exec remaining RequestFilter attributes with Priority >= 0
+				if (attributes != null)
+				{
+					for (; i < attributes.Length; i++)
+					{
+						var attribute = attributes[i];
+						ServiceManager.Container.AutoWire(attribute);
+						attribute.ResponseFilter(httpReq, httpRes, response);
+						Release(attribute);
+						if (httpRes.IsClosed) return httpRes.IsClosed;
+					}
+				}
+
+				return httpRes.IsClosed;
+			}
 		}
 
 		public virtual void Dispose()

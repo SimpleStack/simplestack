@@ -10,27 +10,36 @@ namespace SimpleStack
 {
 	public interface INServiceExec
 	{
+		void CreateServiceRunner(IAppHost appHost);
 		object Execute(IRequestContext requestContext, object instance, object request);
 	}
 
 	public class NServiceRequestExec<TService, TRequest> : INServiceExec
 	{
-		static NServiceRequestExec()
+		//static NServiceRequestExec()
+		//{
+		//	try
+		//	{
+		//		NServiceExec<TService>.CreateServiceRunnersFor<TRequest>();
+		//	}
+		//	catch (Exception ex)
+		//	{
+		//		ex.Message.Print();
+		//		throw;
+		//	}
+		//}
+
+		public void CreateServiceRunner(IAppHost appHost)
 		{
-			try
-			{
-				NServiceExec<TService>.CreateServiceRunnersFor<TRequest>();
-			}
-			catch (Exception ex)
-			{
-				ex.Message.Print();
-				throw;
-			}
+			NServiceExec<TService>.CreateServiceRunnersFor<TRequest>(appHost);
 		}
 
 		public object Execute(IRequestContext requestContext, object instance, object request)
 		{
-			return NServiceExec<TService>.Execute(requestContext, instance, request,
+			return NServiceExec<TService>.Execute(
+				requestContext,
+				instance,
+				request,
 				typeof(TRequest).Name);
 		}
 	}
@@ -55,11 +64,8 @@ namespace SimpleStack
 
 	public class NServiceExec<TService>
 	{
-		private static Dictionary<Type, List<ActionContext>> actionMap
-		= new Dictionary<Type, List<ActionContext>>();
-
-		private static Dictionary<string, InstanceExecFn> execMap 
-		= new Dictionary<string, InstanceExecFn>();
+		private static Dictionary<Type, List<ActionContext>> actionMap = new Dictionary<Type, List<ActionContext>>();
+		private static Dictionary<string, InstanceExecFn> execMap = new Dictionary<string, InstanceExecFn>();
 
 		static NServiceExec()
 		{
@@ -84,8 +90,7 @@ namespace SimpleStack
 					actionCtx.ServiceAction = (service, request) =>
 						mi.Invoke(service, new[] { request });
 				}
-				//TODO: vdaron : Remove Requets Filter support
-				/*
+
 				var reqFilters = new List<IHasRequestFilter>();
 				var resFilters = new List<IHasResponseFilter>();
 
@@ -106,7 +111,7 @@ namespace SimpleStack
 
 				if (resFilters.Count > 0)
 					actionCtx.ResponseFilters = resFilters.ToArray();
-*/
+
 				if (!actionMap.ContainsKey(requestType))
 					actionMap[requestType] = new List<ActionContext>();
 
@@ -155,19 +160,23 @@ namespace SimpleStack
 					: new List<ActionContext>();
 		}
 
-		public static void CreateServiceRunnersFor<TRequest>()
+		public static void CreateServiceRunnersFor<TRequest>(IAppHost appHost)
 		{
 			foreach (var actionCtx in GetActionsFor<TRequest>())
 			{
-				if (execMap.ContainsKey(actionCtx.Id)) continue;
+				if (execMap.ContainsKey(actionCtx.Id)) 
+					continue;
 
-				var serviceRunner = EndpointHost.CreateServiceRunner<TRequest>(actionCtx);
+				var serviceRunner = appHost.CreateServiceRunner<TRequest>(actionCtx);
 				execMap[actionCtx.Id] = serviceRunner.Process;
 			}
 		}
 
-		public static object Execute(IRequestContext requestContext,
-			object instance, object request, string requestName)
+		public static object Execute(
+			IRequestContext requestContext,
+			object instance,
+			object request,
+			string requestName)
 		{
 			var actionName = requestContext != null
 				? requestContext.Get<IHttpRequest>().HttpMethod

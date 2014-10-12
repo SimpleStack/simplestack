@@ -50,7 +50,7 @@ namespace SimpleStack.Handlers
 		{
 			try
 			{
-				if (EndpointHost.ApplyPreRequestFilters(httpReq, httpRes)) 
+				if (AppHost.ApplyPreRequestFilters(httpReq, httpRes)) 
 					return;
 
 				httpReq.ResponseContentType = httpReq.GetQueryStringContentType() ?? this.HandlerContentType;
@@ -59,11 +59,11 @@ namespace SimpleStack.Handlers
 					&& !string.IsNullOrEmpty(callback);
 
 				var request = CreateRequest(httpReq, operationName);
-				if (EndpointHost.ApplyRequestFilters(httpReq, httpRes, request)) 
+				if (AppHost.ApplyRequestFilters(httpReq, httpRes, request)) 
 					return;
 
 				var response = GetResponse(httpReq, httpRes, request);
-				if (EndpointHost.ApplyResponseFilters(httpReq, httpRes, response)) 
+				if (AppHost.ApplyResponseFilters(httpReq, httpRes, response)) 
 					return;
 
 				if (doJsonp && !(response is CompressedResult))

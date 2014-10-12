@@ -320,11 +320,11 @@ namespace SimpleStack
 			var serviceExecDef = typeof(NServiceRequestExec<,>).MakeGenericType(serviceType, requestType);
 			var iserviceExec = (INServiceExec)serviceExecDef.CreateInstance();
 
+			iserviceExec.CreateServiceRunner(appHost);
+
 			ServiceExecFn handlerFn = (requestContext, dto) => {
 				var service = serviceFactoryFn.CreateInstance(serviceType);
-
 				ServiceExecFn serviceExec = (reqCtx, req) => iserviceExec.Execute(reqCtx, service, req);
-
 				return ManagedServiceExec(serviceExec, service, requestContext, dto);
 			};
 

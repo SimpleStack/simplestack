@@ -376,7 +376,7 @@ namespace SimpleStack.Extensions
 		public static void EndServiceStackRequest(this IHttpResponse httpRes, bool skipHeaders = false)
 		{
 			httpRes.EndHttpRequest(skipHeaders: skipHeaders);
-			EndpointHost.CompleteRequest();
+			httpRes.AppHost.OnEndRequest();
 		}
 
 		//public static void EndHttpRequest(this HttpResponse httpRes, bool skipHeaders = false, bool skipClose = false, bool closeOutputStream = false, Action<HttpResponse> afterBody = null)
@@ -404,7 +404,7 @@ namespace SimpleStack.Extensions
 
 		public static void EndHttpRequestWithNoContent(this IHttpResponse httpRes)
 		{
-			if (EndpointHost.Config == null || EndpointHost.Config.Return204NoContentForEmptyResponse)
+			if (httpRes.AppHost.Config == null || httpRes.AppHost.Config.Return204NoContentForEmptyResponse)
 			{
 				if (httpRes.StatusCode == (int)HttpStatusCode.OK)
 				{

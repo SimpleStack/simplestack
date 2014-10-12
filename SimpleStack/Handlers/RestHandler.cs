@@ -42,7 +42,7 @@ namespace SimpleStack.Handlers
 		{
 			try
 			{
-				if (EndpointHost.ApplyPreRequestFilters(httpReq, httpRes)) 
+				if (AppHost.ApplyPreRequestFilters(httpReq, httpRes)) 
 					return;
 
 				var restPath = GetRestPath(httpReq.HttpMethod, httpReq.PathInfo);
@@ -59,11 +59,11 @@ namespace SimpleStack.Handlers
 				AppHost.Config.AssertContentType(responseContentType);
 
 				var request = GetRequest(httpReq, restPath);
-				if (EndpointHost.ApplyRequestFilters(httpReq, httpRes, request)) 
+				if (AppHost.ApplyRequestFilters(httpReq, httpRes, request)) 
 					return;
 
 				var response = GetResponse(httpReq, httpRes, request);
-				if (EndpointHost.ApplyResponseFilters(httpReq, httpRes, response)) 
+				if (AppHost.ApplyResponseFilters(httpReq, httpRes, response)) 
 					return;
 
 				if (doJsonp && !(response is CompressedResult))

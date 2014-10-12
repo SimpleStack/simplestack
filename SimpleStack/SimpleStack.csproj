@@ -177,7 +177,6 @@
     <Compile Include="Metadata\SoapMetadataConfig.cs" />
     <Compile Include="Interfaces\ISimpleStackHttpHandler.cs" />
     <Compile Include="Metadata\MetadataPagesConfig.cs" />
-    <Compile Include="EndpointHost.cs" />
     <Compile Include="Interfaces\IAppHost.cs" />
     <Compile Include="Cache\MemoryCacheClient.cs" />
     <Compile Include="Cache\ICacheClient.cs" />

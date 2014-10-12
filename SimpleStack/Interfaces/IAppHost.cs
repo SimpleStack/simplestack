@@ -120,6 +120,10 @@ namespace SimpleStack.Interfaces
 		/// Create a service runner for IService actions
 		/// </summary>
 		IServiceRunner<TRequest> CreateServiceRunner<TRequest>(ActionContext actionContext);
+
+		bool ApplyPreRequestFilters(IHttpRequest httpReq, IHttpResponse httpRes);
+		bool ApplyResponseFilters(IHttpRequest httpReq, IHttpResponse httpRes, object response);
+		bool ApplyRequestFilters(IHttpRequest httpReq, IHttpResponse httpRes, object requestDto);
 	}
 
 	public interface IHasAppHost
