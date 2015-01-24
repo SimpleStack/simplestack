@@ -8,6 +8,10 @@ namespace SimpleStack.Interfaces
 {
 	public interface IServiceBase : IResolver
 	{
+		IAppHost GetAppHost();
+
+		void SetAppHost(IAppHost appHost);
+
 		IResolver GetResolver();
 
 		/// <summary>

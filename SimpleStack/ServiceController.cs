@@ -322,11 +322,17 @@ namespace SimpleStack
 
 			iserviceExec.CreateServiceRunner(appHost);
 
-			ServiceExecFn handlerFn = (requestContext, dto) => {
-				var service = serviceFactoryFn.CreateInstance(serviceType);
-				ServiceExecFn serviceExec = (reqCtx, req) => iserviceExec.Execute(reqCtx, service, req);
-				return ManagedServiceExec(serviceExec, service, requestContext, dto);
-			};
+		    ServiceExecFn handlerFn = (requestContext, dto) =>
+		    {
+		        var service = serviceFactoryFn.CreateInstance(serviceType);
+		        var iserv = service as IServiceBase;
+		        if (iserv != null)
+		        {
+		            iserv.SetAppHost(appHost);
+		        }
+		        ServiceExecFn serviceExec = (reqCtx, req) => iserviceExec.Execute(reqCtx, service, req);
+		        return ManagedServiceExec(serviceExec, service, requestContext, dto);
+		    };
 
 			AddToRequestExecMap(requestType, serviceType, handlerFn);
 		}
