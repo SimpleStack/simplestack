@@ -16,22 +16,12 @@ namespace SimpleStack
 	{
 		public IRequestContext RequestContext { get; set; }
 
-		private IAppHost _appHost;
-
 		public virtual IResolver GetResolver()
 		{
-			return _appHost;
+			return AppHost;
 		}
 
-		public virtual IAppHost GetAppHost()
-		{
-			return _appHost;
-		}
-
-		public virtual void SetAppHost(IAppHost resolver)
-		{
-			_appHost = resolver;
-		}
+		public virtual IAppHost AppHost { get; set; }
 
 		public virtual T TryResolve<T>()
 		{

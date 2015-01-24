@@ -147,7 +147,7 @@ namespace SimpleStack.Swagger
 		{
 			var httpReq = RequestContext.Get<IHttpRequest>();
 			var path = "/" + request.Name;
-			var appHost = GetAppHost();
+			var appHost = AppHost;
 			var map = appHost.ServiceManager.ServiceController.RestPathMap;
 			var paths = new List<RestPath>();
 

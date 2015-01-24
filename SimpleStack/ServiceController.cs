@@ -328,7 +328,7 @@ namespace SimpleStack
 		        var iserv = service as IServiceBase;
 		        if (iserv != null)
 		        {
-		            iserv.SetAppHost(appHost);
+		            iserv.AppHost = appHost;
 		        }
 		        ServiceExecFn serviceExec = (reqCtx, req) => iserviceExec.Execute(reqCtx, service, req);
 		        return ManagedServiceExec(serviceExec, service, requestContext, dto);

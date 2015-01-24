@@ -48,7 +48,7 @@ namespace SimpleStack.Swagger
 
 		public object Get(Resources request)
 		{
-			var basePath = GetAppHost().Config.WebHostUrl ?? (GetAppHost().Config.UseHttpsLinks
+			var basePath = AppHost.Config.WebHostUrl ?? (AppHost.Config.UseHttpsLinks
 				                                                  ? Request.GetParentPathUrl().ToHttps()
 				                                                  : Request.GetParentPathUrl());
 
@@ -58,7 +58,7 @@ namespace SimpleStack.Swagger
 				BasePath = basePath,
 				Apis = new List<RestService>()
 			};
-			var operations = GetAppHost().ServiceManager.Metadata;
+			var operations = AppHost.ServiceManager.Metadata;
 			var allTypes = operations.GetAllTypes();
 			var allOperationNames = operations.GetAllOperationNames();
 			foreach (var operationName in allOperationNames)
@@ -83,7 +83,7 @@ namespace SimpleStack.Swagger
 
 		protected void CreateRestPaths(List<RestService> apis, Type operationType, String operationName)
 		{
-			var map = GetAppHost().ServiceManager.ServiceController.RestPathMap;
+			var map = AppHost.ServiceManager.ServiceController.RestPathMap;
 			var paths = new List<string>();
 			foreach (var key in map.Keys)
 			{
